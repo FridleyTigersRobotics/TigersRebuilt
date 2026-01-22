@@ -7,6 +7,7 @@
 #include <Eigen/Core>
 #include <studica/AHRS.h>  // navX 2.0
 #include "Vision.h"
+#include "Constants.h"
 
 /**
  * Replacement for ExampleGlobalMeasurementSensor using navX 2.0.
@@ -31,7 +32,7 @@ class ExampleGlobalMeasurementSensor {
    * tiltThresholdDegrees: max allowed tilt (pitch or roll) before reducing confidence
    */
   static frc::Pose2d GetEstimatedGlobalPose(const frc::Pose2d& currentPose,
-                                            double tiltThresholdDegrees = 15.0) {
+                                            double tiltThresholdDegrees = constants::Vision::tiltThresholdDegrees) {
     currentOdometryPose = currentPose;
     bool visionIgnoredDueToTilt = false;
 

@@ -42,5 +42,6 @@ inline const frc::Transform3d kRobotToCam{
     frc::Rotation3d{0_rad, -30_deg, 0_rad}};
 inline const frc::AprilTagFieldLayout kTagLayout{
     frc::AprilTagFieldLayout::LoadField(frc::AprilTagField::k2026RebuiltWelded)};
+inline const double tiltThresholdDegrees = 15.0; //tilt threshold for when to start ignoring vision data for 2D pose estimation
 }  // namespace Vision
 } // namespace Constants
