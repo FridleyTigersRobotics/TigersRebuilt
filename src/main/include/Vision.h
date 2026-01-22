@@ -25,142 +25,108 @@
 #pragma once
 
 #include <functional>
-#include <limits>
 #include <memory>
+#include <cmath>
+#include <limits>
 
 #include <frc/apriltag/AprilTagFieldLayout.h>
-#include <frc/apriltag/AprilTagFields.h>
 #include <photon/PhotonCamera.h>
 #include <photon/PhotonPoseEstimator.h>
-#include <photon/estimation/VisionEstimation.h>
-#include <photon/simulation/VisionSystemSim.h>
-#include <photon/simulation/VisionTargetSim.h>
 #include <photon/targeting/PhotonPipelineResult.h>
-#include <frc/RobotBase.h>
-
+#include <frc/geometry/Pose2d.h>
+#include <frc/geometry/Translation2d.h>
+#include <units/time.h>
+#include <units/length.h>
 
 #include "Constants.h"
 
 class Vision {
  public:
   /**
-   * @param estConsumer Lamba that will accept a pose estimate and pass it to
+   * @param estConsumer Lambda that will accept a pose estimate and pass it to
    * your desired SwerveDrivePoseEstimator.
    */
   Vision(std::function<void(frc::Pose2d, units::second_t,
                             Eigen::Matrix<double, 3, 1>)>
              estConsumer)
-      : estConsumer{estConsumer} {
-    if (frc::RobotBase::IsSimulation()) {
-      visionSim = std::make_unique<photon::VisionSystemSim>("main");
-
-      visionSim->AddAprilTags(constants::Vision::kTagLayout);
-
-      cameraProp = std::make_unique<photon::SimCameraProperties>();
-
-      cameraProp->SetCalibration(960, 720, frc::Rotation2d{90_deg});
-      cameraProp->SetCalibError(.35, .10);
-      cameraProp->SetFPS(15_Hz);
-      cameraProp->SetAvgLatency(50_ms);
-      cameraProp->SetLatencyStdDev(15_ms);
-
-      cameraSim =
-          std::make_shared<photon::PhotonCameraSim>(&camera, *cameraProp.get());
-
-      visionSim->AddCamera(cameraSim.get(), constants::Vision::kRobotToCam);
-      cameraSim->EnableDrawWireframe(true);
-    }
-  }
+      : estConsumer{estConsumer} {}
 
   photon::PhotonPipelineResult GetLatestResult() { return m_latestResult; }
 
   void Periodic() {
-    // Run each new pipeline result through our pose estimator
     for (const auto& result : camera.GetAllUnreadResults()) {
-      // cache result and update pose estimator
+      m_latestResult = result;
+
       auto visionEst = photonEstimator.EstimateCoprocMultiTagPose(result);
       if (!visionEst) {
         visionEst = photonEstimator.EstimateLowestAmbiguityPose(result);
       }
-      m_latestResult = result;
-
-      // In sim only, add our vision estimate to the sim debug field
-      if (frc::RobotBase::IsSimulation()) {
-        if (visionEst) {
-          GetSimDebugField()
-              .GetObject("VisionEstimation")
-              ->SetPose(visionEst->estimatedPose.ToPose2d());
-        } else {
-          GetSimDebugField().GetObject("VisionEstimation")->SetPoses({});
-        }
-      }
 
       if (visionEst) {
         estConsumer(visionEst->estimatedPose.ToPose2d(), visionEst->timestamp,
-                    GetEstimationStdDevs(visionEst->estimatedPose.ToPose2d()));
+                    ComputeAutoStdDevs(visionEst->estimatedPose.ToPose2d()));
       }
     }
   }
 
-  Eigen::Matrix<double, 3, 1> GetEstimationStdDevs(frc::Pose2d estimatedPose) {
-    Eigen::Matrix<double, 3, 1> estStdDevs =
-        constants::Vision::kSingleTagStdDevs;
-    auto targets = GetLatestResult().GetTargets();
-    int numTags = 0;
+  // Computes standard deviations automatically from visible tags and distance
+  Eigen::Matrix<double, 3, 1> ComputeAutoStdDevs(frc::Pose2d estimatedPose) {
+    Eigen::Matrix<double, 3, 1> estStdDevs;
+
+    const auto& targets = m_latestResult.GetTargets();
+    if (targets.empty()) {
+      // No tags visible -> extremely uncertain
+      estStdDevs << std::numeric_limits<double>::max(),
+                    std::numeric_limits<double>::max(),
+                    std::numeric_limits<double>::max();
+      return estStdDevs;
+    }
+
     units::meter_t avgDist = 0_m;
+    int numTags = 0;
+
     for (const auto& tgt : targets) {
-      auto tagPose =
-          photonEstimator.GetFieldLayout().GetTagPose(tgt.GetFiducialId());
+      auto tagPose = photonEstimator.GetFieldLayout().GetTagPose(tgt.GetFiducialId());
       if (tagPose) {
         numTags++;
         avgDist += tagPose->ToPose2d().Translation().Distance(
             estimatedPose.Translation());
       }
     }
+
     if (numTags == 0) {
+      estStdDevs << std::numeric_limits<double>::max(),
+                    std::numeric_limits<double>::max(),
+                    std::numeric_limits<double>::max();
       return estStdDevs;
     }
+
     avgDist /= numTags;
-    if (numTags > 1) {
-      estStdDevs = constants::Vision::kMultiTagStdDevs;
-    }
-    if (numTags == 1 && avgDist > 4_m) {
-      estStdDevs = (Eigen::MatrixXd(3, 1) << std::numeric_limits<double>::max(),
-                    std::numeric_limits<double>::max(),
-                    std::numeric_limits<double>::max())
-                       .finished();
-    } else {
-      estStdDevs = estStdDevs * (1 + (avgDist.value() * avgDist.value() / 30));
-    }
+
+    // Simple heuristic: uncertainty grows with distance, shrinks with number of tags
+    double xyStd = std::pow(avgDist.value(), 1.1) / numTags;  // meters
+    double rotStd = std::pow(avgDist.value(), 1.2) / numTags; // radians
+
+    // Clamp to avoid zero uncertainty
+    xyStd = std::max(xyStd, 0.01);
+    rotStd = std::max(rotStd, 0.01);
+
+    estStdDevs << xyStd, xyStd, rotStd;
     return estStdDevs;
   }
 
-  void SimPeriodic(frc::Pose2d robotSimPose) {
-    visionSim->Update(robotSimPose);
+  // Legacy wrapper for backward compatibility
+  Eigen::Matrix<double, 3, 1> GetEstimationStdDevs(frc::Pose2d pose) {
+    return ComputeAutoStdDevs(pose);
   }
 
-  void ResetSimPose(frc::Pose2d pose) {
-    if (frc::RobotBase::IsSimulation()) {
-      visionSim->ResetRobotPose(pose);
-    }
-  }
-
-  frc::Field2d& GetSimDebugField() { return visionSim->GetDebugField(); }
+  photon::PhotonPoseEstimator& GetEstimator() { return photonEstimator; }
 
  private:
   photon::PhotonPoseEstimator photonEstimator{constants::Vision::kTagLayout,
                                               constants::Vision::kRobotToCam};
   photon::PhotonCamera camera{constants::Vision::kCameraName};
-  std::unique_ptr<photon::VisionSystemSim> visionSim;
-  std::unique_ptr<photon::SimCameraProperties> cameraProp;
-  std::shared_ptr<photon::PhotonCameraSim> cameraSim;
-
-  // The most recent result, cached for calculating std devs
   photon::PhotonPipelineResult m_latestResult;
   std::function<void(frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>)>
       estConsumer;
-
- public:
-  photon::PhotonPoseEstimator& GetEstimator() { return photonEstimator; }
-
 };

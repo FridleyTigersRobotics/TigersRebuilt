@@ -42,8 +42,5 @@ inline const frc::Transform3d kRobotToCam{
     frc::Rotation3d{0_rad, -30_deg, 0_rad}};
 inline const frc::AprilTagFieldLayout kTagLayout{
     frc::AprilTagFieldLayout::LoadField(frc::AprilTagField::k2026RebuiltWelded)};
-
-inline const Eigen::Matrix<double, 3, 1> kSingleTagStdDevs{4, 4, 8};
-inline const Eigen::Matrix<double, 3, 1> kMultiTagStdDevs{0.5, 0.5, 1};
 }  // namespace Vision
 } // namespace Constants
