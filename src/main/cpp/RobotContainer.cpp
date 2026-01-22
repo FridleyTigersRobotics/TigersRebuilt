@@ -3,6 +3,8 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "RobotContainer.h"
+#include "subsystems/ExampleGlobalMeasurementSensor.h"
+
 
 #include <frc2/command/button/Trigger.h>
 
@@ -11,6 +13,8 @@
 
 RobotContainer::RobotContainer() {
   // Initialize all of your commands and subsystems here
+  studica::AHRS m_navx { studica::AHRS::NavXComType::kMXP_SPI };
+  ExampleGlobalMeasurementSensor::SetNavX(&m_navx);
 
   // Configure the button bindings
   ConfigureBindings();

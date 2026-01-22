@@ -9,6 +9,8 @@
 
 #include "Constants.h"
 #include "subsystems/ExampleSubsystem.h"
+#include "subsystems/Drivetrain.h"
+#include "Vision.h"
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -26,10 +28,12 @@ class RobotContainer {
  private:
   // Replace with CommandPS4Controller or CommandJoystick if needed
   frc2::CommandXboxController m_driverController{
-      OperatorConstants::kDriverControllerPort};
+      constants::OperatorConstants::kDriverControllerPort};
 
   // The robot's subsystems are defined here...
   ExampleSubsystem m_subsystem;
+  Drivetrain m_drivetrain;
+  Vision m_vision{[](frc::Pose2d, units::second_t, Eigen::Matrix<double,3,1>){}};
 
   void ConfigureBindings();
 };

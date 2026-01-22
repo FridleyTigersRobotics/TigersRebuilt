@@ -37,11 +37,26 @@ void Drivetrain::UpdateOdometry() {
                          {m_frontLeft.GetPosition(), m_frontRight.GetPosition(),
                           m_backLeft.GetPosition(), m_backRight.GetPosition()});
 
-  // Also apply vision measurements. We use 0.3 seconds in the past as an
-  // example -- on a real robot, this must be calculated based either on latency
-  // or timestamps.
-  m_poseEstimator.AddVisionMeasurement(
+    
+  frc::Pose2d visionPose =
       ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(
-          m_poseEstimator.GetEstimatedPosition()),
-      frc::Timer::GetTimestamp() - 0.3_s);
+          m_poseEstimator.GetEstimatedPosition());
+
+  units::second_t visionTimestamp =
+      ExampleGlobalMeasurementSensor::GetLastTimestamp();
+
+  Eigen::Matrix<double, 3, 1> stdDevs =
+      ExampleGlobalMeasurementSensor::GetLastStdDevs();
+
+  // Convert Eigen stdDevs to wpi::array<double, 3>
+  wpi::array<double, 3> visionStdDevArray{stdDevs(0), stdDevs(1), stdDevs(2)};
+
+  // Feed vision into the pose estimator
+  m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
+
+  //
+  frc::SmartDashboard::PutNumber("Vision X", ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).X().to<double>());
+  frc::SmartDashboard::PutNumber("Vision Y", ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Y().to<double>());
+  frc::SmartDashboard::PutNumber("Vision Heading", ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Rotation().Degrees().to<double>());
+
 }
