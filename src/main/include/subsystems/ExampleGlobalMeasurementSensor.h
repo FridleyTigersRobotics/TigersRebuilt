@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <frc/geometry/Pose2d.h>
@@ -62,26 +63,37 @@ class ExampleGlobalMeasurementSensor {
           lastStdDevs = m_vision->GetEstimationStdDevs(lastPose);
 
           if (visionIgnoredDueToTilt) {
-            lastStdDevs *= 1000;  // effectively ignore vision
+            lastStdDevs *= 1000;  // effectively ignore vision (kept as-is)
           }
 
-          // SmartDashboard logging
+          // SmartDashboard logging (clearer flags)
+          frc::SmartDashboard::PutBoolean("VisionHasTargets", true);
           frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", visionIgnoredDueToTilt);
+          frc::SmartDashboard::PutBoolean("VisionUsed", true);
           frc::SmartDashboard::PutNumber("RobotPitch", pitch);
           frc::SmartDashboard::PutNumber("RobotRoll", roll);
 
           return lastPose;
         }
+
+        // If we had targets but could not produce a pose estimate:
+        frc::SmartDashboard::PutBoolean("VisionHasTargets", true);
+        frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", false);
+        frc::SmartDashboard::PutBoolean("VisionUsed", false);
+        frc::SmartDashboard::PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
+        frc::SmartDashboard::PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
       }
     }
 
-    // No vision available → fallback to odometry
+    // No vision available or estimate failed → fallback to odometry
     lastPose = currentPose;
     lastTimestamp = frc::Timer::GetFPGATimestamp();
     lastStdDevs = Eigen::Matrix<double, 3, 1>{1.0, 1.0, 1.0};
 
-    // Log odometry fallback
-    frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", true);
+    // Log odometry fallback with clearer flags
+    frc::SmartDashboard::PutBoolean("VisionHasTargets", false);
+    frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", false);  // only true when actually gated by tilt
+    frc::SmartDashboard::PutBoolean("VisionUsed", false);
     frc::SmartDashboard::PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
     frc::SmartDashboard::PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
 

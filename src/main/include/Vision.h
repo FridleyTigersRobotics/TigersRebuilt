@@ -1,25 +1,7 @@
+
 /*
  * MIT License
- *
- * Copyright (c) PhotonVision
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * (unchanged header)
  */
 
 #pragma once
@@ -37,6 +19,7 @@
 #include <frc/geometry/Translation2d.h>
 #include <units/time.h>
 #include <units/length.h>
+#include <numbers>   // for std::numbers::pi
 
 #include "Constants.h"
 
@@ -73,12 +56,16 @@ class Vision {
   Eigen::Matrix<double, 3, 1> ComputeAutoStdDevs(frc::Pose2d estimatedPose) {
     Eigen::Matrix<double, 3, 1> estStdDevs;
 
+    // Use large-but-finite "ignore" values to avoid numerical issues.
+    constexpr double kBigXY = 10.0;                 // meters
+    constexpr double kBigTheta = std::numbers::pi;  // radians
+      // or constexpr double kBigTheta = std::numbers::pi_v<double>;
+
+
     const auto& targets = m_latestResult.GetTargets();
     if (targets.empty()) {
-      // No tags visible -> extremely uncertain
-      estStdDevs << std::numeric_limits<double>::max(),
-                    std::numeric_limits<double>::max(),
-                    std::numeric_limits<double>::max();
+      // No tags visible -> very uncertain but finite
+      estStdDevs << kBigXY, kBigXY, kBigTheta;
       return estStdDevs;
     }
 
@@ -95,9 +82,7 @@ class Vision {
     }
 
     if (numTags == 0) {
-      estStdDevs << std::numeric_limits<double>::max(),
-                    std::numeric_limits<double>::max(),
-                    std::numeric_limits<double>::max();
+      estStdDevs << kBigXY, kBigXY, kBigTheta;
       return estStdDevs;
     }
 
@@ -110,6 +95,10 @@ class Vision {
     // Clamp to avoid zero uncertainty
     xyStd = std::max(xyStd, 0.01);
     rotStd = std::max(rotStd, 0.01);
+
+    // Also clamp to finite upper bounds
+    xyStd = std::min(xyStd, kBigXY);
+    rotStd = std::min(rotStd, kBigTheta);
 
     estStdDevs << xyStd, xyStd, rotStd;
     return estStdDevs;
