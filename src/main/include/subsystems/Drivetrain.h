@@ -12,12 +12,13 @@
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveDriveOdometry.h>
+#include <networktables/NetworkTableInstance.h>
 
 #include "SwerveModule.h"
 
 class Drivetrain : public frc2::SubsystemBase {
  public:
-  Drivetrain() { m_gyro.Reset(); }
+  Drivetrain();
 
   void Drive(units::meters_per_second_t xSpeed,
              units::meters_per_second_t ySpeed, units::radians_per_second_t rot,
@@ -62,4 +63,8 @@ class Drivetrain : public frc2::SubsystemBase {
       frc::Pose2d{},
       {0.1, 0.1, 0.1},
       {0.1, 0.1, 0.1}};
+
+  //Drivetrain network table instance
+  nt::NetworkTableInstance DrivetrainNetInst = nt::NetworkTableInstance::GetDefault();
+  std::shared_ptr<nt::NetworkTable> DrivetrainNetTable;
 };

@@ -17,6 +17,7 @@ Robot::Robot() {}
  * LiveWindow and SmartDashboard integrated updating.
  */
 void Robot::RobotPeriodic() {
+  m_container.UpdateNetTable();
   frc2::CommandScheduler::GetInstance().Run();
 }
 

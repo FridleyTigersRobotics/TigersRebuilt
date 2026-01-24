@@ -6,6 +6,12 @@
 #include <frc/Timer.h>
 #include "subsystems/VisionPoseEstimator.h"
 
+Drivetrain::Drivetrain()
+{
+    m_gyro.Reset();
+    DrivetrainNetTable = DrivetrainNetInst.GetTable("2227 Drivetrain");
+    DrivetrainNetInst.StartServer();
+}
 
 // This method will be called once per scheduler run
 void Drivetrain::Periodic() {}
@@ -55,8 +61,8 @@ void Drivetrain::UpdateOdometry() {
   m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
 
   //
-  frc::SmartDashboard::PutNumber("Vision X", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).X().to<double>());
-  frc::SmartDashboard::PutNumber("Vision Y", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Y().to<double>());
-  frc::SmartDashboard::PutNumber("Vision Heading", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Rotation().Degrees().to<double>());
+  DrivetrainNetTable->PutNumber("Vision X", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).X().to<double>());
+  DrivetrainNetTable->PutNumber("Vision Y", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Y().to<double>());
+  DrivetrainNetTable->PutNumber("Vision Heading", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Rotation().Degrees().to<double>());
 
 }
