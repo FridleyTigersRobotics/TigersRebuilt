@@ -1,80 +1,130 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
 
 #include "subsystems/SwerveModule.h"
+
+#include <algorithm>
 #include <numbers>
+
 #include <frc/geometry/Rotation2d.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <rev/config/SparkMaxConfig.h>
 
-SwerveModule::SwerveModule(const int driveMotorChannel,
-                           const int turningMotorChannel,
-                           const int driveEncoderChannelA,
-                           const int driveEncoderChannelB,
-                           const int turningEncoderChannelA,
-                           const int turningEncoderChannelB)
-    : m_driveMotor(driveMotorChannel),
-      m_turningMotor(turningMotorChannel),
-      m_driveEncoder(driveEncoderChannelA, driveEncoderChannelB),
-      m_turningEncoder(turningEncoderChannelA, turningEncoderChannelB) {
-  // Set the distance per pulse for the drive encoder. We can simply use the
-  // distance traveled for one rotation of the wheel divided by the encoder
-  // resolution.
-  m_driveEncoder.SetDistancePerPulse(2 * std::numbers::pi *
-                                     kWheelRadius.value() / kEncoderResolution);
+using namespace rev::spark;
+using namespace ctre::phoenix6;
 
-  // Set the distance (in this case, angle) per pulse for the turning encoder.
-  // This is the the angle through an entire rotation (2 * std::numbers::pi)
-  // divided by the encoder resolution.
-  m_turningEncoder.SetDistancePerPulse(2 * std::numbers::pi /
-                                       kEncoderResolution);
+SwerveModule::SwerveModule(const int driveMotorCanId,
+                           const int turningMotorCanId,
+                           const int turningCANcoderId,
+                           const units::radian_t turningEncoderOffset,
+                           const units::meters_per_second_t maxModuleSpeed,
+                           const std::string& name)
+    : m_driveMotor(driveMotorCanId, SparkLowLevel::MotorType::kBrushless),
+      m_turningMotor(turningMotorCanId, SparkLowLevel::MotorType::kBrushless),
+      m_driveEncoder(m_driveMotor.GetEncoder()),
+      m_cancoder(turningCANcoderId),
+      m_driveSpeedName("DriveSpeed_" + name),
+      m_driveAngleName("Angle_" + name),
+      m_driveRawAngleName("RawAngle_" + name),
+      m_maxSpeed(maxModuleSpeed),
+      m_cancoderId(turningCANcoderId) {
+  // ---- SparkMax (drive) config ----
+  SparkMaxConfig driveCfg{};
+  driveCfg.Inverted(false)
+          .SetIdleMode(SparkMaxConfig::IdleMode::kBrake)
+          .VoltageCompensation(12.0)
+          .SmartCurrentLimit(20);
 
-  // Limit the PID Controller's input range between -pi and pi and set the input
-  // to be continuous.
+  // Position in meters; velocity in m/s (SDS MK4 L1 factors)
+  driveCfg.encoder
+      .PositionConversionFactor(kMetersPerMotorRev)
+      .VelocityConversionFactor(kRPMtoMps);
+
+  m_driveMotor.Configure(driveCfg,
+                         rev::ResetMode::kResetSafeParameters,
+                         rev::PersistMode::kPersistParameters);
+  m_driveEncoder.SetPosition(0.0);
+
+  // ---- SparkMax (turn) config ----
+  SparkMaxConfig turnCfg{};
+  turnCfg.Inverted(false)
+         .SetIdleMode(SparkMaxConfig::IdleMode::kCoast)
+         .VoltageCompensation(12.0)
+         .SmartCurrentLimit(30, 60);
+
+  m_turningMotor.Configure(turnCfg,
+                           rev::ResetMode::kResetSafeParameters,
+                           rev::PersistMode::kPersistParameters);
+
+  // ---- CANcoder configuration (Phoenix 6) ----
+  // Apply magnet offset in *turns*; normalize to [0, 2π) when reading.
+  configs::CANcoderConfiguration ccCfg{};
+  const double offsetTurns = turningEncoderOffset.value() / (2.0 * std::numbers::pi);
+  ccCfg.MagnetSensor.WithMagnetOffset(units::angle::turn_t{offsetTurns});
+  // If the angle direction is reversed on your module:
+  // ccCfg.MagnetSensor.WithSensorDirection(
+  //     signals::SensorDirectionValue::Clockwise_Positive);
+  m_cancoder.GetConfigurator().Apply(ccCfg);
+  // (CANcoder absolute position returns "turns"; read via StatusSignal API.) [1](https://www.revrobotics.com/rev-21-3005/)
+
+  // Turn PID wraps on [0, 2π)
   m_turningPIDController.EnableContinuousInput(
-      -units::radian_t{std::numbers::pi}, units::radian_t{std::numbers::pi});
+      0_rad, units::radian_t{2.0 * std::numbers::pi});
 }
 
 frc::SwerveModuleState SwerveModule::GetState() const {
-  return {units::meters_per_second_t{m_driveEncoder.GetRate()},
-          units::radian_t{m_turningEncoder.GetDistance()}};
+  const auto wheelSpeed = units::meters_per_second_t{m_driveEncoder.GetVelocity()};
+  const auto angle = ReadCancoderAngle();
+  return {wheelSpeed, angle};
 }
 
 frc::SwerveModulePosition SwerveModule::GetPosition() const {
-  return {units::meter_t{m_driveEncoder.GetDistance()},
-          units::radian_t{m_turningEncoder.GetDistance()}};
+  const auto wheelDist = units::meter_t{m_driveEncoder.GetPosition()};
+  const auto angle = ReadCancoderAngle();
+  return {wheelDist, angle};
 }
 
 void SwerveModule::SetDesiredState(frc::SwerveModuleState& referenceState) {
-  frc::Rotation2d encoderRotation{
-      units::radian_t{m_turningEncoder.GetDistance()}};
+  const frc::Rotation2d encoderRotation = CurrentModuleRotation();
 
-  // Optimize the reference state to avoid spinning further than 90 degrees
+  // WPILib style: minimize rotation & reduce lateral skidding
   referenceState.Optimize(encoderRotation);
-
-  // Scale speed by cosine of angle error. This scales down movement
-  // perpendicular to the desired direction of travel that can occur when
-  // modules change directions. This results in smoother driving.
   referenceState.CosineScale(encoderRotation);
 
-  // Calculate the drive output from the drive PID controller.
-  const auto driveOutput = m_drivePIDController.Calculate(
-      m_driveEncoder.GetRate(), referenceState.speed.value());
-
-  const auto driveFeedforward =
-      m_driveFeedforward.Calculate(referenceState.speed);
-
-  // Calculate the turning motor output from the turning PID controller.
+  // ---- Turning control (Profiled PID) ----
+  const auto currentAngle = ReadCancoderAngle();
   const auto turnOutput = m_turningPIDController.Calculate(
-      units::radian_t{m_turningEncoder.GetDistance()},
-      referenceState.angle.Radians());
+      currentAngle, referenceState.angle.Radians());
 
-  const auto turnFeedforward = m_turnFeedforward.Calculate(
-      m_turningPIDController.GetSetpoint().velocity);
+  // ---- Drive closed-loop (RIO PID + Feedforward -> volts) ----
+  const auto currentMps = units::meters_per_second_t{m_driveEncoder.GetVelocity()};
+  const auto setpointMps = referenceState.speed;
 
-  // Set the motor outputs.
-  m_driveMotor.SetVoltage(units::volt_t{driveOutput} + driveFeedforward);
-  m_turningMotor.SetVoltage(units::volt_t{turnOutput} + turnFeedforward);
+  const double pidVolts = m_drivePID.Calculate(currentMps.value(), setpointMps.value());
+  const auto ffVolts = m_driveFF.Calculate(setpointMps);
+
+  auto totalVolts = units::volt_t{pidVolts} + ffVolts;
+  if (totalVolts > 12_V)  totalVolts = 12_V;
+  if (totalVolts < -12_V) totalVolts = -12_V;
+
+  m_driveMotor.SetVoltage(totalVolts);
+  m_turningMotor.Set(turnOutput);
 }
 
-// This method will be called once per scheduler run
-void SwerveModule::Periodic() {}
+void SwerveModule::Periodic() {
+  // No periodic work required.
+}
+
+frc::Rotation2d SwerveModule::CurrentModuleRotation() const {
+  return frc::Rotation2d{ReadCancoderAngle()};
+}
+
+units::radian_t SwerveModule::ReadCancoderAngle() const {
+  // AbsolutePosition returns "turns" (Phoenix 6 StatusSignal); convert to radians. [1](https://www.revrobotics.com/rev-21-3005/)
+  const double turns = m_cancoder.GetAbsolutePosition().GetValueAsDouble();
+  const double rad   = turns * 2.0 * std::numbers::pi;
+
+  // Normalize to [0, 2π)
+  const double twoPi = 2.0 * std::numbers::pi;
+  double w = std::fmod(rad, twoPi);
+  if (w < 0.0) w += twoPi;
+  return units::radian_t{w};
+}
