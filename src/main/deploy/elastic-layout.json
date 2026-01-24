@@ -28,7 +28,7 @@
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/2227 RobotContainer/Alliance",
+              "topic": "/2227/RobotContainer/Alliance",
               "period": 0.06,
               "data_type": "string",
               "show_submit_button": false
@@ -56,7 +56,7 @@
             "height": 256.0,
             "type": "Radial Gauge",
             "properties": {
-              "topic": "/2227 Drivetrain/Robot meters per second",
+              "topic": "/2227/Drivetrain/Robot meters per second",
               "period": 0.06,
               "data_type": "double",
               "start_angle": -140.0,
@@ -77,7 +77,7 @@
             "height": 256.0,
             "type": "Graph",
             "properties": {
-              "topic": "/2227 RobotContainer/Total Current",
+              "topic": "/2227/RobotContainer/Total Current",
               "period": 0.033,
               "data_type": "double",
               "time_displayed": 5.0,
@@ -128,7 +128,7 @@
             "height": 128.0,
             "type": "Voltage View",
             "properties": {
-              "topic": "/2227 RobotContainer/Robot Voltage",
+              "topic": "/2227/RobotContainer/Robot Voltage",
               "period": 0.06,
               "data_type": "double",
               "min_value": 4.0,
@@ -146,7 +146,7 @@
             "height": 256.0,
             "type": "Match Time",
             "properties": {
-              "topic": "/2227 RobotContainer/Match_Time",
+              "topic": "/2227/RobotContainer/Match_Time",
               "period": 0.06,
               "data_type": "double",
               "time_display_mode": "Minutes and Seconds",
