@@ -6,11 +6,13 @@
 
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/button/CommandXboxController.h>
+#include <frc/smartdashboard/SendableChooser.h>
 
 #include "Constants.h"
 #include "subsystems/ExampleSubsystem.h"
 #include "subsystems/Drivetrain.h"
 #include "Vision.h"
+#include <studica/AHRS.h>
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -26,6 +28,7 @@ class RobotContainer {
   frc2::CommandPtr GetAutonomousCommand();
 
  private:
+  studica::AHRS m_navx{studica::AHRS::NavXComType::kMXP_SPI};
   // Replace with CommandPS4Controller or CommandJoystick if needed
   frc2::CommandXboxController m_driverController{
       constants::OperatorConstants::kDriverControllerPort};

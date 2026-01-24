@@ -4,7 +4,7 @@
 
 #include "RobotContainer.h"
 #include "subsystems/VisionPoseEstimator.h"
-
+#include <frc/smartdashboard/SmartDashboard.h>
 
 #include <frc2/command/button/Trigger.h>
 
@@ -13,7 +13,7 @@
 
 RobotContainer::RobotContainer() {
   // Initialize all of your commands and subsystems here
-  studica::AHRS m_navx { studica::AHRS::NavXComType::kMXP_SPI };
+
   VisionPoseEstimator::SetNavX(&m_navx);
 
   // Configure the button bindings
