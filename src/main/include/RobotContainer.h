@@ -1,3 +1,4 @@
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -12,7 +13,6 @@
 #include "subsystems/ExampleSubsystem.h"
 #include "subsystems/Drivetrain.h"
 #include "Vision.h"
-#include <studica/AHRS.h>
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -28,18 +28,21 @@ class RobotContainer {
   frc2::CommandPtr GetAutonomousCommand();
 
  private:
-  studica::AHRS m_navx{studica::AHRS::NavXComType::kMXP_SPI};
-  // Replace with CommandPS4Controller or CommandJoystick if needed
+  // Driver controls
   frc2::CommandXboxController m_driverController{
       constants::OperatorConstants::kDriverControllerPort};
 
-  // The robot's subsystems are defined here...
+  // Subsystems
   ExampleSubsystem m_subsystem;
   Drivetrain m_drivetrain;
-  Vision m_vision{[](frc::Pose2d, units::second_t, Eigen::Matrix<double,3,1>){}};
+
+  // Vision: pass a no-op callback matching Vision's expected signature
+  //   (frc::Pose2d, units::second_t, Eigen::Matrix<double,3,1>)
+  Vision m_vision{
+      [](frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>) {}};
 
   void ConfigureBindings();
 
-  std::shared_ptr<nt::NetworkTable> ContainerNetTable = nt::NetworkTableInstance::GetDefault().GetTable("2227/RobotContainer");
-
+  std::shared_ptr<nt::NetworkTable> ContainerNetTable =
+      nt::NetworkTableInstance::GetDefault().GetTable("2227/RobotContainer");
 };

@@ -1,32 +1,31 @@
 
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 #pragma once
 
 #include <frc2/command/SubsystemBase.h>
 #include <numbers>
 
-#include <frc/AnalogGyro.h>  // You can swap to Pigeon2 or navX later if desired
+// navX (Studica vendor lib) + SPI port enum
+#include <studica/AHRS.h>
+#include <frc/SPI.h>
+
 #include <frc/estimator/SwerveDrivePoseEstimator.h>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveDriveOdometry.h>
-#include <networktables/NetworkTable.h>           // added
+#include <frc/filter/SlewRateLimiter.h>
+#include <frc/XboxController.h>
+#include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
 
-// Units headers (avoid using-directives in headers)
+// Units headers
 #include <units/angle.h>
 #include <units/velocity.h>
+#include <units/time.h>
+#include <units/dimensionless.h>  // scalar, scalar_t
 
 #include "SwerveModule.h"
 
-// -----------------------------
-// CAN IDs and module constants
-// -----------------------------
 namespace DriveIds {
-// REV SparkMax CAN IDs (drive / turn)
 constexpr int kFL_Drive = 1;
 constexpr int kFL_Turn  = 2;
 constexpr int kFR_Drive = 3;
@@ -36,7 +35,6 @@ constexpr int kBL_Turn  = 6;
 constexpr int kBR_Drive = 7;
 constexpr int kBR_Turn  = 8;
 
-// CTRE CANcoder device IDs (fill in your real IDs)
 constexpr int kFL_CANCoder = 21;
 constexpr int kFR_CANCoder = 22;
 constexpr int kBL_CANCoder = 23;
@@ -44,11 +42,8 @@ constexpr int kBR_CANCoder = 24;
 }  // namespace DriveIds
 
 namespace DriveConst {
-// Max wheel speed (pass to each SwerveModule for RIO-side closed-loop scaling)
-constexpr auto kMaxModuleSpeed = 4.5_mps;  // must match Drivetrain::kMaxSpeed
+constexpr auto kMaxModuleSpeed = 4.5_mps;
 
-// Per-module azimuth zero offsets in radians (measured with wheels pointing robot-forward).
-// If you stored MagnetOffset in each CANcoder via Tuner X, leave these at 0_rad.
 constexpr auto kFL_Offset = 0.000_rad;
 constexpr auto kFR_Offset = 0.000_rad;
 constexpr auto kBL_Offset = 0.000_rad;
@@ -65,27 +60,33 @@ class Drivetrain : public frc2::SubsystemBase {
              bool fieldRelative,
              units::second_t period);
 
+  // Xbox drive with deadband + cubic shaping + slew-rate limiting
+  void DriveFromXbox(const frc::XboxController& controller,
+                     bool fieldRelative,
+                     units::second_t period,
+                     double deadband = 0.05);
+
   void UpdateOdometry();
 
-  // Must stay consistent with DriveConst::kMaxModuleSpeed
   static constexpr auto kMaxSpeed = 4.5_mps;
-  static constexpr units::radians_per_second_t kMaxAngularSpeed{12.0};  // 12 rad/sec rotate speed
+  static constexpr units::radians_per_second_t kMaxAngularSpeed{12.0};  // 12 rad/s
 
   /*
-Calculated max angular speed:
-r_eff is the distance from the robot center to a module, using r_eff = sqrt(x^2 + y^2),
-where x and y are the module's Translation2d coordinates in meters.
+    Calculated max angular speed:
+    r_eff is the distance from the robot center to a module, using r_eff = sqrt(x^2 + y^2),
+    where x and y are the module's Translation2d coordinates in meters.
 
-The theoretical maximum angular velocity is:
-omega_max ≈ v_max / r_eff
-where v_max is the robot's maximum linear wheel speed.
+    The theoretical maximum angular velocity is:
+    omega_max ≈ v_max / r_eff
+    where v_max is the robot's maximum linear wheel speed.
 
-Choose a final kMaxAngularSpeed slightly below the theoretical value
-(about 90–95%) to provide margin for voltage sag, friction, and real-world losses.
+    Choose a final kMaxAngularSpeed slightly below the theoretical value
+    (about 90–95%) to provide margin for voltage sag, friction, and real-world losses.
   */
 
-  /** Will be called periodically whenever the CommandScheduler runs. */
   void Periodic() override;
+
+  void ZeroGyro();
 
  private:
   // Module locations (relative to robot center)
@@ -94,47 +95,39 @@ Choose a final kMaxAngularSpeed slightly below the theoretical value
   frc::Translation2d m_backLeftLocation{-0.260_m, +0.260_m};
   frc::Translation2d m_backRightLocation{-0.260_m, -0.260_m};
 
-  // -----------------------------
-  // Swerve modules (PRIMARY CTOR)
-  // -----------------------------
-  // SwerveModule(int driveCAN, int turnCAN, int cancoderId,
-  //              units::radian_t angleOffset, units::meters_per_second_t maxSpeed,
-  //              const std::string& name)
+  // Swerve modules
+  SwerveModule m_frontLeft{DriveIds::kFL_Drive, DriveIds::kFL_Turn, DriveIds::kFL_CANCoder,
+                           DriveConst::kFL_Offset, DriveConst::kMaxModuleSpeed, "FL"};
+  SwerveModule m_frontRight{DriveIds::kFR_Drive, DriveIds::kFR_Turn, DriveIds::kFR_CANCoder,
+                            DriveConst::kFR_Offset, DriveConst::kMaxModuleSpeed, "FR"};
+  SwerveModule m_backLeft{DriveIds::kBL_Drive, DriveIds::kBL_Turn, DriveIds::kBL_CANCoder,
+                          DriveConst::kBL_Offset, DriveConst::kMaxModuleSpeed, "BL"};
+  SwerveModule m_backRight{DriveIds::kBR_Drive, DriveIds::kBR_Turn, DriveIds::kBR_CANCoder,
+                           DriveConst::kBR_Offset, DriveConst::kMaxModuleSpeed, "BR"};
 
-  SwerveModule m_frontLeft{
-      DriveIds::kFL_Drive, DriveIds::kFL_Turn, DriveIds::kFL_CANCoder,
-      DriveConst::kFL_Offset, DriveConst::kMaxModuleSpeed, "FL"};
-
-  SwerveModule m_frontRight{
-      DriveIds::kFR_Drive, DriveIds::kFR_Turn, DriveIds::kFR_CANCoder,
-      DriveConst::kFR_Offset, DriveConst::kMaxModuleSpeed, "FR"};
-
-  SwerveModule m_backLeft{
-      DriveIds::kBL_Drive, DriveIds::kBL_Turn, DriveIds::kBL_CANCoder,
-      DriveConst::kBL_Offset, DriveConst::kMaxModuleSpeed, "BL"};
-
-  SwerveModule m_backRight{
-      DriveIds::kBR_Drive, DriveIds::kBR_Turn, DriveIds::kBR_CANCoder,
-      DriveConst::kBR_Offset, DriveConst::kMaxModuleSpeed, "BR"};
-
-  // Gyro (still AnalogGyro for now)
-  frc::AnalogGyro m_gyro{0};
+  // navX (Studica) — constructed in .cpp with com type
+  studica::AHRS m_gyro;
 
   frc::SwerveDriveKinematics<4> m_kinematics{
       m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation};
 
-  // Pose estimator (example gains; tune for your robot)
   frc::SwerveDrivePoseEstimator<4> m_poseEstimator{
       m_kinematics,
-      frc::Rotation2d{},
+      frc::Rotation2d{},  // initial heading
       {m_frontLeft.GetPosition(), m_frontRight.GetPosition(),
        m_backLeft.GetPosition(), m_backRight.GetPosition()},
       frc::Pose2d{},
-      {0.1, 0.1, 0.1},   // state std devs (x, y, theta)
-      {0.1, 0.1, 0.1}    // vision std devs (x, y, theta)
-  };
+      {0.1, 0.1, 0.1},
+      {0.1, 0.1, 0.1}};
 
-  // Drivetrain network table
   std::shared_ptr<nt::NetworkTable> DrivetrainNetTable =
       nt::NetworkTableInstance::GetDefault().GetTable("2227/Drivetrain");
+
+  // Slew-rate limiters (template param is a UNIT TAG; rates set in .cpp)
+  frc::SlewRateLimiter<units::scalar> m_xLimiter;
+  frc::SlewRateLimiter<units::scalar> m_yLimiter;
+  frc::SlewRateLimiter<units::scalar> m_rotLimiter;
+
+  static double ShapeInput(double v, double deadband);
+  frc::Rotation2d GetGyroRotation();  // non-const (AHRS getters are non-const)
 };

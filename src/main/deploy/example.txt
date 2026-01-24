@@ -2,3 +2,56 @@ Files placed in this directory will be deployed to the RoboRIO into the
   'deploy' directory in the home folder. Use the 'frc::filesystem::GetDeployDirectory'
   function from the 'frc/Filesystem.h' header to get a proper path relative to the deploy
   directory.
+
+
+
+  1) Quick sanity checks (first power‑on)
+
+CANcoder zeros: With wheels pointing robot‑forward, verify each module’s reported angle looks reasonable (0–2π). If you saved zero in the device, offsets in code stay 0_rad.
+Module directions: Command a tiny forward x‑speed; all wheels should point forward and roll forward. If a wheel drives backward, swap that module’s drive inversion in config or flip its kP sign only if using a device loop.
+Azimuth response: Slowly command rotation; each module should steer smoothly to the set angle without hunting. If it oscillates, lower turn kP (e.g., from 0.5 → 0.35).
+
+
+2) Drive closed‑loop (RIO PID+FF) quick tune
+You’re using PID + feedforward to volts with m/s feedback:
+
+
+Set FF first
+
+Leave drive kP = 0.2, kD = 0.
+Ramp to a few steady speeds (e.g., 0.5, 1.5, 3.0, 4.0 m/s).
+Adjust kV so the PID contribution at steady state is small (near 0 V).
+If the wheel sticks at very low speed, add a small kS (e.g., 0.2 V).
+
+
+
+Tighten regulation
+
+Increase kP until you get good tracking without oscillation (typical 0.15–0.35).
+Add a little kD only if you see overshoot on step changes (often not needed).
+
+
+
+
+Tip: Expose live numbers (setpoint, actual m/s, PID output, FF volts) on Shuffleboard/NT so you can see what the loop is doing.
+
+
+3) Angular speed constant (you already updated geometry)
+With your module locations at (±0.260 m, ±0.260 m) and max wheel speed 4.5 m/s, the theoretical max angular speed is about 12.24 rad/s; you set 12.0 rad/s, which is a great, realistic value. Keep it there unless drive testing suggests you need more margin.
+
+4) Nice‑to‑have polish (quick wins)
+
+Status rates (CTRE): If you notice angle latency, you can bump CANcoder status rate a bit using Phoenix 6’s status‑signal API and refresh groups (we can add a small helper later).
+Telemetry: Add per‑module NT topics: drive setpoint (m/s), drive actual (m/s), turn setpoint (rad), turn actual (rad), turn error (rad), drive volts.
+Safety limits: Consider clamping commanded chassis acceleration or adding a driver “slow mode” (e.g., scale inputs to 60%) for precise alignment.
+Vision weighting: If vision updates cause pose “jumps”, inflate vision std‑devs when target area is small or latency is high.
+
+
+5) Next steps — your call
+Want me to:
+
+add a minimal Shuffleboard tuning block (sliders for kS/kV/kP, plots for setpoint vs. measured),
+bump CANcoder status update frequency safely,
+or draft the Pigeon2 swap (drop‑in replacement for AnalogGyro with better yaw stability)?
+
+Tell me which you prefer and I’ll drop in the code snippets ready to paste.
