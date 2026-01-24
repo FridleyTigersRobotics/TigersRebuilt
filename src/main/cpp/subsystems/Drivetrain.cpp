@@ -9,7 +9,7 @@
 Drivetrain::Drivetrain()
 {
     m_gyro.Reset();
-    DrivetrainNetTable = DrivetrainNetInst.GetTable("2227 Drivetrain");
+    DrivetrainNetTable = DrivetrainNetInst.GetTable("2227/Drivetrain");
     DrivetrainNetInst.StartServer();
 }
 

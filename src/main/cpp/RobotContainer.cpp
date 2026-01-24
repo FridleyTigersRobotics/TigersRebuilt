@@ -21,7 +21,7 @@ RobotContainer::RobotContainer() {
   ConfigureBindings();
 
   // start net table
-  ContainerNetTable = ContainerNetInst.GetTable("2227 RobotContainer");
+  ContainerNetTable = ContainerNetInst.GetTable("2227/RobotContainer");
   ContainerNetInst.StartServer();
 }
 
