@@ -6,7 +6,6 @@
 
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/button/CommandXboxController.h>
-#include <frc/PowerDistribution.h>
 
 #include "Constants.h"
 #include "subsystems/ExampleSubsystem.h"
@@ -23,12 +22,10 @@
 class RobotContainer {
  public:
   RobotContainer();
-  void UpdateNetTable();
 
   frc2::CommandPtr GetAutonomousCommand();
 
  private:
-  frc::PowerDistribution ZipZap{1, frc::PowerDistribution::ModuleType::kRev};
   // Replace with CommandPS4Controller or CommandJoystick if needed
   frc2::CommandXboxController m_driverController{
       constants::OperatorConstants::kDriverControllerPort};
@@ -40,10 +37,6 @@ class RobotContainer {
 
   void ConfigureBindings();
 
-  std::string DetermineAlliance();
-  
-
-  nt::NetworkTableInstance ContainerNetInst = nt::NetworkTableInstance::GetDefault();
-  std::shared_ptr<nt::NetworkTable> ContainerNetTable;
+  std::shared_ptr<nt::NetworkTable> ContainerNetTable = nt::NetworkTableInstance::GetDefault().GetTable("2227/RobotContainer");
 
 };

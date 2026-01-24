@@ -9,8 +9,6 @@
 Drivetrain::Drivetrain()
 {
     m_gyro.Reset();
-    DrivetrainNetTable = DrivetrainNetInst.GetTable("2227/Drivetrain");
-    DrivetrainNetInst.StartServer();
 }
 
 // This method will be called once per scheduler run

@@ -64,7 +64,6 @@ class Drivetrain : public frc2::SubsystemBase {
       {0.1, 0.1, 0.1},
       {0.1, 0.1, 0.1}};
 
-  //Drivetrain network table instance
-  nt::NetworkTableInstance DrivetrainNetInst = nt::NetworkTableInstance::GetDefault();
-  std::shared_ptr<nt::NetworkTable> DrivetrainNetTable;
+  //Drivetrain network table
+  std::shared_ptr<nt::NetworkTable> DrivetrainNetTable = nt::NetworkTableInstance::GetDefault().GetTable("2227/Drivetrain");
 };
