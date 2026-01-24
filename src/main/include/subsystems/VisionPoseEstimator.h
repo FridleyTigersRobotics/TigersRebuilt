@@ -1,14 +1,18 @@
 
 #pragma once
 
+#include <networktables/NetworkTableInstance.h>
+#include <networktables/NetworkTable.h>
+#include <cmath>
+
 #include <frc/geometry/Pose2d.h>
 #include <frc/Timer.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 #include <units/time.h>
 #include <Eigen/Core>
 #include <studica/AHRS.h>  // navX 2.0
 #include "Vision.h"
 #include "Constants.h"
+
 
 /**
  * Replacement for ExampleGlobalMeasurementSensor using navX 2.0.
@@ -16,7 +20,7 @@
  *
  * Tilt handling: If the robot is tipped too far, vision updates are marked
  * with very large std deviations so the pose estimator trusts odometry more.
- * SmartDashboard displays tilt angle and whether vision was ignored.
+ * NetTable displays tilt angle and whether vision was ignored.
  */
 class VisionPoseEstimator {
  public:
@@ -66,22 +70,22 @@ class VisionPoseEstimator {
             lastStdDevs *= 1000;  // effectively ignore vision (kept as-is)
           }
 
-          // SmartDashboard logging (clearer flags)
-          frc::SmartDashboard::PutBoolean("VisionHasTargets", true);
-          frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", visionIgnoredDueToTilt);
-          frc::SmartDashboard::PutBoolean("VisionUsed", true);
-          frc::SmartDashboard::PutNumber("RobotPitch", pitch);
-          frc::SmartDashboard::PutNumber("RobotRoll", roll);
+          // NetTable logging (clearer flags)
+          VisionNetTable->PutBoolean("VisionHasTargets", true);
+          VisionNetTable->PutBoolean("VisionIgnoredTilt", visionIgnoredDueToTilt);
+          VisionNetTable->PutBoolean("VisionUsed", true);
+          VisionNetTable->PutNumber("RobotPitch", pitch);
+          VisionNetTable->PutNumber("RobotRoll", roll);
 
           return lastPose;
         }
 
         // If we had targets but could not produce a pose estimate:
-        frc::SmartDashboard::PutBoolean("VisionHasTargets", true);
-        frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", false);
-        frc::SmartDashboard::PutBoolean("VisionUsed", false);
-        frc::SmartDashboard::PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
-        frc::SmartDashboard::PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
+        VisionNetTable->PutBoolean("VisionHasTargets", true);
+        VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
+        VisionNetTable->PutBoolean("VisionUsed", false);
+        VisionNetTable->PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
+        VisionNetTable->PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
       }
     }
 
@@ -91,11 +95,11 @@ class VisionPoseEstimator {
     lastStdDevs = Eigen::Matrix<double, 3, 1>{1.0, 1.0, 1.0};
 
     // Log odometry fallback with clearer flags
-    frc::SmartDashboard::PutBoolean("VisionHasTargets", false);
-    frc::SmartDashboard::PutBoolean("VisionIgnoredTilt", false);  // only true when actually gated by tilt
-    frc::SmartDashboard::PutBoolean("VisionUsed", false);
-    frc::SmartDashboard::PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
-    frc::SmartDashboard::PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
+    VisionNetTable->PutBoolean("VisionHasTargets", false);
+    VisionNetTable->PutBoolean("VisionIgnoredTilt", false);  // only true when actually gated by tilt
+    VisionNetTable->PutBoolean("VisionUsed", false);
+    VisionNetTable->PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
+    VisionNetTable->PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
 
     return lastPose;
   }
@@ -113,4 +117,5 @@ class VisionPoseEstimator {
   static inline frc::Pose2d lastPose{};
   static inline units::second_t lastTimestamp = 0_s;
   static inline Eigen::Matrix<double, 3, 1> lastStdDevs{};
+  static inline std::shared_ptr<nt::NetworkTable> VisionNetTable = nt::NetworkTableInstance::GetDefault().GetTable("2227/Vision");
 };
