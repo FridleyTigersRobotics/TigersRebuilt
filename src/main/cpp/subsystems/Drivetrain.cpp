@@ -4,7 +4,7 @@
 
 #include "subsystems/Drivetrain.h"
 #include <frc/Timer.h>
-#include "subsystems/ExampleGlobalMeasurementSensor.h"
+#include "subsystems/VisionPoseEstimator.h"
 
 
 // This method will be called once per scheduler run
@@ -39,14 +39,14 @@ void Drivetrain::UpdateOdometry() {
 
     
   frc::Pose2d visionPose =
-      ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(
+      VisionPoseEstimator::GetEstimatedGlobalPose(
           m_poseEstimator.GetEstimatedPosition());
 
   units::second_t visionTimestamp =
-      ExampleGlobalMeasurementSensor::GetLastTimestamp();
+      VisionPoseEstimator::GetLastTimestamp();
 
   Eigen::Matrix<double, 3, 1> stdDevs =
-      ExampleGlobalMeasurementSensor::GetLastStdDevs();
+      VisionPoseEstimator::GetLastStdDevs();
 
   // Convert Eigen stdDevs to wpi::array<double, 3>
   wpi::array<double, 3> visionStdDevArray{stdDevs(0), stdDevs(1), stdDevs(2)};
@@ -55,8 +55,8 @@ void Drivetrain::UpdateOdometry() {
   m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
 
   //
-  frc::SmartDashboard::PutNumber("Vision X", ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).X().to<double>());
-  frc::SmartDashboard::PutNumber("Vision Y", ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Y().to<double>());
-  frc::SmartDashboard::PutNumber("Vision Heading", ExampleGlobalMeasurementSensor::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Rotation().Degrees().to<double>());
+  frc::SmartDashboard::PutNumber("Vision X", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).X().to<double>());
+  frc::SmartDashboard::PutNumber("Vision Y", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Y().to<double>());
+  frc::SmartDashboard::PutNumber("Vision Heading", VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()).Rotation().Degrees().to<double>());
 
 }

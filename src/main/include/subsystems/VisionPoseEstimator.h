@@ -18,7 +18,7 @@
  * with very large std deviations so the pose estimator trusts odometry more.
  * SmartDashboard displays tilt angle and whether vision was ignored.
  */
-class ExampleGlobalMeasurementSensor {
+class VisionPoseEstimator {
  public:
   /** Sets the Vision subsystem to use */
   static void SetVision(Vision* vision) { m_vision = vision; }
