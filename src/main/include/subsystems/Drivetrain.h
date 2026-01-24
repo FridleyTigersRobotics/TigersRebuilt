@@ -69,17 +69,30 @@ class Drivetrain : public frc2::SubsystemBase {
 
   // Must stay consistent with DriveConst::kMaxModuleSpeed
   static constexpr auto kMaxSpeed = 4.5_mps;
-  static constexpr units::radians_per_second_t kMaxAngularSpeed{std::numbers::pi};  // 1/2 rotation per second
+  static constexpr units::radians_per_second_t kMaxAngularSpeed{12.0};  // 12 rad/sec rotate speed
+
+  /*
+Calculated max angular speed:
+r_eff is the distance from the robot center to a module, using r_eff = sqrt(x^2 + y^2),
+where x and y are the module's Translation2d coordinates in meters.
+
+The theoretical maximum angular velocity is:
+omega_max ≈ v_max / r_eff
+where v_max is the robot's maximum linear wheel speed.
+
+Choose a final kMaxAngularSpeed slightly below the theoretical value
+(about 90–95%) to provide margin for voltage sag, friction, and real-world losses.
+  */
 
   /** Will be called periodically whenever the CommandScheduler runs. */
   void Periodic() override;
 
  private:
   // Module locations (relative to robot center)
-  frc::Translation2d m_frontLeftLocation{+0.381_m, +0.381_m};
-  frc::Translation2d m_frontRightLocation{+0.381_m, -0.381_m};
-  frc::Translation2d m_backLeftLocation{-0.381_m, +0.381_m};
-  frc::Translation2d m_backRightLocation{-0.381_m, -0.381_m};
+  frc::Translation2d m_frontLeftLocation{+0.260_m, +0.260_m};
+  frc::Translation2d m_frontRightLocation{+0.260_m, -0.260_m};
+  frc::Translation2d m_backLeftLocation{-0.260_m, +0.260_m};
+  frc::Translation2d m_backRightLocation{-0.260_m, -0.260_m};
 
   // -----------------------------
   // Swerve modules (PRIMARY CTOR)
