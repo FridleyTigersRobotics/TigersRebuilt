@@ -20,7 +20,7 @@
 #include <units/voltage.h>
 
 // REV SparkMax (new-style) APIs
-#include <rev/sparkmax.h>
+#include<rev/SparkMax.h>
 #include <rev/config/SparkMaxConfig.h>
 
 // CTRE Phoenix 6 CANcoder
