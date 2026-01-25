@@ -26,28 +26,28 @@
 #include "SwerveModule.h"
 
 namespace DriveIds {
-constexpr int kFL_Drive = 1;
-constexpr int kFL_Turn  = 2;
+constexpr int kFL_Drive = 4;
+constexpr int kFL_Turn  = 5;
 constexpr int kFR_Drive = 3;
-constexpr int kFR_Turn  = 4;
-constexpr int kBL_Drive = 5;
-constexpr int kBL_Turn  = 6;
+constexpr int kFR_Turn  = 2;
+constexpr int kBL_Drive = 8;
+constexpr int kBL_Turn  = 9;
 constexpr int kBR_Drive = 7;
-constexpr int kBR_Turn  = 8;
+constexpr int kBR_Turn  = 6;
 
-constexpr int kFL_CANCoder = 21;
-constexpr int kFR_CANCoder = 22;
-constexpr int kBL_CANCoder = 23;
-constexpr int kBR_CANCoder = 24;
+constexpr int kFL_CANCoder = 11;
+constexpr int kFR_CANCoder = 13;
+constexpr int kBL_CANCoder = 10;
+constexpr int kBR_CANCoder = 12;
 }  // namespace DriveIds
 
 namespace DriveConst {
 constexpr auto kMaxModuleSpeed = 4.5_mps;
 
-constexpr auto kFL_Offset = 0.000_rad;
-constexpr auto kFR_Offset = 0.000_rad;
-constexpr auto kBL_Offset = 0.000_rad;
-constexpr auto kBR_Offset = 0.000_rad;
+constexpr auto kFL_Offset = -1.404_rad;
+constexpr auto kFR_Offset = -2.315_rad;
+constexpr auto kBL_Offset = -2.331_rad;
+constexpr auto kBR_Offset = -0.205_rad;
 }  // namespace DriveConst
 
 class Drivetrain : public frc2::SubsystemBase {
