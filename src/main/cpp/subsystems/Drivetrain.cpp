@@ -140,3 +140,19 @@ void Drivetrain::UpdateOdometry() {
 }
 
 void Drivetrain::ZeroGyro() { m_gyro.ZeroYaw(); }
+
+void Drivetrain::SetXStance(){
+  
+  const units::meters_per_second_t zero{0.0};
+ 
+  frc::SwerveModuleState fl{zero, frc::Rotation2d{units::degree_t{+45}}};
+  frc::SwerveModuleState fr{zero, frc::Rotation2d{units::degree_t{-45}}};
+  frc::SwerveModuleState bl{zero, frc::Rotation2d{units::degree_t{-45}}};
+  frc::SwerveModuleState br{zero, frc::Rotation2d{units::degree_t{+45}}};
+
+  m_frontLeft .SetDesiredState(fl);
+  m_frontRight.SetDesiredState(fr);
+  m_backLeft  .SetDesiredState(bl);
+  m_backRight .SetDesiredState(br);
+
+}

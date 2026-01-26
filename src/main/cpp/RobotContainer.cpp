@@ -40,12 +40,23 @@ void RobotContainer::ConfigureBindings() {
     return m_subsystem.ExampleCondition();
   }).OnTrue(ExampleCommand(&m_subsystem).ToPtr());
 
-  // Example method command on B (keep your existing behavior)
-  m_driverController.B().WhileTrue(m_subsystem.ExampleMethodCommand());
 
-  // A button: Zero gyro (wrap InstantCommand with .ToPtr() to satisfy OnTrue())
-  m_driverController.A().OnTrue(
-      frc2::InstantCommand([this] { m_drivetrain.ZeroGyro(); }, {&m_drivetrain}).ToPtr());
+  // Hold B to X the wheels
+    m_driverController.B().WhileTrue(
+        frc2::RunCommand(
+            [this] { m_drivetrain.SetXStance(); },   // runs every ~20 ms while held
+            {&m_drivetrain}
+        ).ToPtr()
+    );
+
+
+  // POV Up: Zero gyro (wrap InstantCommand with .ToPtr() to satisfy OnTrue()) 
+  m_driverController.POV(0).OnTrue(
+      frc2::InstantCommand([this]{
+        m_drivetrain.ZeroGyro();
+        m_driverController.GetHID().SetRumble(frc::GenericHID::RumbleType::kBothRumble, 1.0);
+      }, {&m_drivetrain}).ToPtr());
+
 }
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {

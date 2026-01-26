@@ -54,6 +54,8 @@ class Drivetrain : public frc2::SubsystemBase {
  public:
   Drivetrain();
 
+  void SetXStance();
+
   void Drive(units::meters_per_second_t xSpeed,
              units::meters_per_second_t ySpeed,
              units::radians_per_second_t rot,
