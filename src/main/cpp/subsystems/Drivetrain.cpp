@@ -40,7 +40,14 @@ Drivetrain::Drivetrain()
 }
 
 void Drivetrain::Periodic() {
-  // (optional telemetry)
+  UpdateOdometry();
+  
+  //Get current pose from the SwerveDrivePoseEstimator
+  const auto pose = m_poseEstimator.GetEstimatedPosition();
+  DrivetrainNetTable->PutNumber("Robot X (m)", pose.X().to<double>());
+  DrivetrainNetTable->PutNumber("Robot Y (m)", pose.Y().to<double>());
+  DrivetrainNetTable->PutNumber("Robot Heading (deg)", pose.Rotation().Degrees().to<double>());
+
 }
 
 // -------------------------
