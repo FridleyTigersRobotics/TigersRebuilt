@@ -42,7 +42,7 @@ constexpr int kBR_CANCoder = 12;
 }  // namespace DriveIds
 
 namespace DriveConst {
-constexpr auto kMaxModuleSpeed = 4.5_mps;
+constexpr auto kMaxModuleSpeed = 3.7_mps;
 
 constexpr auto kFL_Offset = -1.404_rad;
 constexpr auto kFR_Offset = -2.315_rad;
@@ -70,8 +70,8 @@ class Drivetrain : public frc2::SubsystemBase {
 
   void UpdateOdometry();
 
-  static constexpr auto kMaxSpeed = 4.5_mps;
-  static constexpr units::radians_per_second_t kMaxAngularSpeed{12.0};  // 12 rad/s
+  static constexpr auto kMaxSpeed = 3.7_mps;
+  static constexpr units::radians_per_second_t kMaxAngularSpeed{10.0};  // 10 rad/s
 
   /*
     Calculated max angular speed:
