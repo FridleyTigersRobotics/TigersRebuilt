@@ -33,9 +33,9 @@ frc::Rotation2d Drivetrain::GetGyroRotation() {
 Drivetrain::Drivetrain()
     // Initialize navX with SPI com type and slew-rate limiter rates (scalar/second)
     : m_gyro{studica::AHRS::NavXComType::kMXP_SPI},
-      m_xLimiter{3.0 / 1_s},
-      m_yLimiter{3.0 / 1_s},
-      m_rotLimiter{4.0 / 1_s} {
+      m_xLimiter{4.0 / 1_s},
+      m_yLimiter{4.0 / 1_s},
+      m_rotLimiter{5.0 / 1_s} {
   m_gyro.ZeroYaw();
 }
 
