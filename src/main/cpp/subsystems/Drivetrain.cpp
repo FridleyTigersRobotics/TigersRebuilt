@@ -32,7 +32,8 @@ double Drivetrain::ShapeInput(double v, double deadband) {
 
 frc::Rotation2d Drivetrain::GetGyroRotation() {
   // Studica navX returns degrees; method is non-const
-  return frc::Rotation2d{units::degree_t{m_gyro.GetAngle()}};
+  const auto yaw_deg = frc::Rotation2d{units::degree_t{m_gyro.GetAngle()}};
+  return frc::Rotation2d{ -yaw_deg }; // <— invert once, use everywhere
 }
 
 // -------------------------
@@ -146,7 +147,9 @@ void Drivetrain::UpdateOdometry() {
   DrivetrainNetTable->PutNumber("Vision Heading", visPose.Rotation().Degrees().to<double>());
 
   DrivetrainNetTable->PutNumber("navX Yaw (deg)", m_gyro.GetYaw());
-  DrivetrainNetTable->PutNumber("navX Angle (deg, continuous)", m_gyro.GetAngle());
+  frc::Rotation2d rotationvalue = GetGyroRotation();
+  double rotationdegrees = rotationvalue.Degrees().value();
+  DrivetrainNetTable->PutNumber("Gyro Angle (deg, continuous)", rotationdegrees);
   m_field.SetRobotPose(Drivetrain::getPose());
 }
 
