@@ -2,6 +2,7 @@
 #pragma once
 
 #include <frc2/command/SubsystemBase.h>
+#include <frc/smartdashboard/Field2d.h>
 #include <numbers>
 
 // navX (Studica vendor lib) + SPI port enum
@@ -140,4 +141,5 @@ class Drivetrain : public frc2::SubsystemBase {
 
   static double ShapeInput(double v, double deadband);
   frc::Rotation2d GetGyroRotation();  // non-const (AHRS getters are non-const)
+  frc::Field2d m_field;
 };

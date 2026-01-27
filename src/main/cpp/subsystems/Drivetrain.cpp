@@ -12,6 +12,7 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/DriverStation.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 #include "subsystems/VisionPoseEstimator.h"
 
@@ -44,6 +45,8 @@ Drivetrain::Drivetrain()
       m_yLimiter{4.0 / units::second_t{1.0}},
       m_rotLimiter{5.0 / units::second_t{1.0}} {
   m_gyro.ZeroYaw();
+  ConfigureAutoBuilder();
+  frc::SmartDashboard::PutData("Field",&m_field);
 }
 
 void Drivetrain::Periodic() {
@@ -144,6 +147,7 @@ void Drivetrain::UpdateOdometry() {
 
   DrivetrainNetTable->PutNumber("navX Yaw (deg)", m_gyro.GetYaw());
   DrivetrainNetTable->PutNumber("navX Angle (deg, continuous)", m_gyro.GetAngle());
+  m_field.SetRobotPose(Drivetrain::getPose());
 }
 
 void Drivetrain::ZeroGyro() { m_gyro.ZeroYaw(); }
