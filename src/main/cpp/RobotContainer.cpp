@@ -6,6 +6,8 @@
 #include "RobotContainer.h"
 #include "subsystems/VisionPoseEstimator.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <pathplanner/lib/auto/NamedCommands.h>
 
 #include <frc2/command/button/Trigger.h>
 #include <frc2/command/RunCommand.h>
@@ -22,6 +24,7 @@ RobotContainer::RobotContainer() {
 
   // Configure the button bindings
   ConfigureBindings();
+  BuildPathPlannerAutoChooser();
 
   // Default teleop drive: read Xbox each loop and drive
   m_drivetrain.SetDefaultCommand(
@@ -60,6 +63,53 @@ void RobotContainer::ConfigureBindings() {
 }
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {
+  auto factory = m_autoFactoryChooser.GetSelected();
+  if (factory) {
+    return factory();  // Build a fresh CommandPtr for the selected auto
+  }
+  // Fallback: no selection / no autos
+  return frc2::InstantCommand([] {}).ToPtr();
+
   // Run your example auto in autonomous
-  return autos::ExampleAuto(&m_subsystem);
+  //return autos::ExampleAuto(&m_subsystem);
+}
+
+void RobotContainer::BuildPathPlannerAutoChooser(){
+  // IMPORTANT: AutoBuilder must have been configured (typically in Drivetrain ctor)
+  // BEFORE we build options. If not, chooser may be empty/flaky. [4](https://www.chiefdelphi.com/t/pathplanner-autobuilder-not-selecting-an-auto/454861)[5](https://pathplanner.dev/pplib-build-an-auto.html)
+
+  // --- Build a chooser of factories (CommandPtr()) ---
+  // Auto-discover all PathPlanner autos deployed with the project
+  std::vector<std::string> autoNames = pathplanner::AutoBuilder::getAllAutoNames(); // [3](https://pathplanner.dev/api/cpp/classpathplanner_1_1AutoBuilder.html)
+
+  if (!autoNames.empty()) {
+    // Set a default option to the first auto
+    const std::string defaultName = autoNames.front();
+    m_autoFactoryChooser.SetDefaultOption(
+        defaultName,
+        [defaultName] {
+          return pathplanner::AutoBuilder::buildAuto(defaultName); // returns CommandPtr [3](https://pathplanner.dev/api/cpp/classpathplanner_1_1AutoBuilder.html)
+        });
+
+    // Add the rest as selectable options
+    for (size_t i = 1; i < autoNames.size(); ++i) {
+      const std::string name = autoNames[i];
+      m_autoFactoryChooser.AddOption(
+          name,
+          [name] {
+            return pathplanner::AutoBuilder::buildAuto(name);      // CommandPtr
+          });
+    }
+  } else {
+    // No autos found; provide a safe no-op default
+    m_autoFactoryChooser.SetDefaultOption(
+        "Do Nothing",
+        [] {
+          // Any CommandPtr works here; InstantCommand().ToPtr() is simple and non-blocking
+          return frc2::InstantCommand([] {}).ToPtr();
+        });
+  }
+
+  // Publish the chooser
+  frc::SmartDashboard::PutData("Auto Mode", &m_autoFactoryChooser);
 }

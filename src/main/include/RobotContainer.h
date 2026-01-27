@@ -7,7 +7,9 @@
 
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/button/CommandXboxController.h>
+#include <frc2/command/button/CommandGenericHID.h>
 #include <frc/smartdashboard/SendableChooser.h>
+#include <functional>
 
 #include "Constants.h"
 #include "subsystems/ExampleSubsystem.h"
@@ -42,6 +44,9 @@ class RobotContainer {
       [](frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>) {}};
 
   void ConfigureBindings();
+  void BuildPathPlannerAutoChooser();
+
+  frc::SendableChooser<std::function<frc2::CommandPtr()>> m_autoFactoryChooser;
 
   std::shared_ptr<nt::NetworkTable> ContainerNetTable =
       nt::NetworkTableInstance::GetDefault().GetTable("2227/RobotContainer");

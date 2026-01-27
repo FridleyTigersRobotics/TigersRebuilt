@@ -6,9 +6,16 @@
 #include <units/time.h>
 #include <units/angle.h>
 
-using namespace units::literals;  // safe in .cpp (e.g., 20_ms, 1_s)
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <pathplanner/lib/config/RobotConfig.h>
+#include <pathplanner/lib/controllers/PPHolonomicDriveController.h>
+#include <frc/geometry/Pose2d.h>
+#include <frc/kinematics/ChassisSpeeds.h>
+#include <frc/DriverStation.h>
 
 #include "subsystems/VisionPoseEstimator.h"
+
+using namespace pathplanner;
 
 // -------------------------
 // Helpers
@@ -33,9 +40,9 @@ frc::Rotation2d Drivetrain::GetGyroRotation() {
 Drivetrain::Drivetrain()
     // Initialize navX with SPI com type and slew-rate limiter rates (scalar/second)
     : m_gyro{studica::AHRS::NavXComType::kMXP_SPI},
-      m_xLimiter{4.0 / 1_s},
-      m_yLimiter{4.0 / 1_s},
-      m_rotLimiter{5.0 / 1_s} {
+      m_xLimiter{4.0 / units::second_t{1.0}},
+      m_yLimiter{4.0 / units::second_t{1.0}},
+      m_rotLimiter{5.0 / units::second_t{1.0}} {
   m_gyro.ZeroYaw();
 }
 
@@ -155,4 +162,50 @@ void Drivetrain::SetXStance(){
   m_backLeft  .SetDesiredState(bl);
   m_backRight .SetDesiredState(br);
 
+}
+
+frc::Pose2d Drivetrain::getPose(){
+  return m_poseEstimator.GetEstimatedPosition();
+}
+
+void Drivetrain::resetPose(frc::Pose2d poseinput){
+  m_poseEstimator.ResetPose(poseinput);
+}
+
+frc::ChassisSpeeds Drivetrain::getRobotRelativeSpeeds(){
+  //Read *measured* module states
+  frc::SwerveModuleState fl = m_frontLeft.GetState();   // speed m/s, angle Rotation2d
+  frc::SwerveModuleState fr = m_frontRight.GetState();
+  frc::SwerveModuleState bl = m_backLeft.GetState();
+  frc::SwerveModuleState br = m_backRight.GetState();
+  return m_kinematics.ToChassisSpeeds(fl, fr, bl, br);
+}
+
+//PathPlanner
+void Drivetrain::ConfigureAutoBuilder(){
+  RobotConfig config = RobotConfig::fromGUISettings();
+  // Configure the AutoBuilder last
+  AutoBuilder::configure(
+      [this](){ return getPose(); }, // Robot pose supplier
+      [this](frc::Pose2d pose){ resetPose(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
+      [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+      [this](auto speeds, auto feedforwards){ Drive(speeds.vx, speeds.vy, speeds.omega, false, units::millisecond_t{20}); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+      std::make_shared<PPHolonomicDriveController>( // PPHolonomicController is the built in path following controller for holonomic drive trains
+          PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+          PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+      ),
+      config, // The robot configuration
+      []() {
+          // Boolean supplier that controls when the path will be mirrored for the red alliance
+          // This will flip the path being followed to the red side of the field.
+          // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+          auto alliance = frc::DriverStation::GetAlliance();
+          if (alliance) {
+              return alliance.value() == frc::DriverStation::Alliance::kRed;
+          }
+          return false;
+      },
+      this // Reference to this subsystem to set requirements
+  );
 }

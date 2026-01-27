@@ -42,12 +42,12 @@ constexpr int kBR_CANCoder = 12;
 }  // namespace DriveIds
 
 namespace DriveConst {
-constexpr auto kMaxModuleSpeed = 3.7_mps; //match kMaxSpeed below
+constexpr auto kMaxModuleSpeed = units::meters_per_second_t{3.7}; //match kMaxSpeed below
 
-constexpr auto kFL_Offset = -1.404_rad;
-constexpr auto kFR_Offset = -2.315_rad;
-constexpr auto kBL_Offset = -2.331_rad;
-constexpr auto kBR_Offset = -0.205_rad;
+constexpr auto kFL_Offset = units::radian_t{-1.404};
+constexpr auto kFR_Offset = units::radian_t{-2.315};
+constexpr auto kBL_Offset = units::radian_t{-2.331};
+constexpr auto kBR_Offset = units::radian_t{-0.20};
 }  // namespace DriveConst
 
 class Drivetrain : public frc2::SubsystemBase {
@@ -55,6 +55,13 @@ class Drivetrain : public frc2::SubsystemBase {
   Drivetrain();
 
   void SetXStance();
+
+  //PathPlanner required methods
+  frc::Pose2d getPose();
+  void resetPose(frc::Pose2d poseinput);
+  frc::ChassisSpeeds getRobotRelativeSpeeds();
+  void ConfigureAutoBuilder();
+
 
   void Drive(units::meters_per_second_t xSpeed,
              units::meters_per_second_t ySpeed,
