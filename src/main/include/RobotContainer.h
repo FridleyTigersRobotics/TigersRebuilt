@@ -45,8 +45,7 @@ class RobotContainer {
 
   void ConfigureBindings();
   void BuildPathPlannerAutoChooser();
-
-  frc::SendableChooser<std::function<frc2::CommandPtr()>> m_autoFactoryChooser;
+  frc::SendableChooser<frc2::Command *> autoChooser;
 
   std::shared_ptr<nt::NetworkTable> ContainerNetTable =
       nt::NetworkTableInstance::GetDefault().GetTable("2227/RobotContainer");
