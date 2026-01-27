@@ -55,6 +55,7 @@ class Drivetrain : public frc2::SubsystemBase {
   Drivetrain();
 
   void SetXStance();
+  frc2::CommandPtr cmdSetXStance();
 
   //PathPlanner required methods
   frc::Pose2d getPose();

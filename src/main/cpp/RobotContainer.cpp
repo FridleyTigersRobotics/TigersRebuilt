@@ -23,7 +23,7 @@ using namespace units::literals;
 #include "commands/Autos.h"
 #include "commands/ExampleCommand.h"
 
-RobotContainer::RobotContainer() {
+RobotContainer::RobotContainer() : m_drivetrain() {
   // NOTE: Drivetrain owns navX now; do not set it here
   // VisionPoseEstimator::SetNavX(&m_navx);  // (removed)
 
@@ -55,8 +55,7 @@ void RobotContainer::ConfigureBindings() {
             [this] { m_drivetrain.SetXStance(); },   // runs every ~20 ms while held
             {&m_drivetrain}
         ).ToPtr()
-    );
-
+    ); // also valid: m_driverController.B().WhileTrue(m_drivetrain.cmdSetXStance());
 
   // POV Up: Zero gyro (wrap InstantCommand with .ToPtr() to satisfy OnTrue()) 
   m_driverController.POV(0).OnTrue(
@@ -79,6 +78,11 @@ frc2::CommandPtr RobotContainer::GetAutonomousCommand() {
 }
 
 void RobotContainer::BuildPathPlannerAutoChooser(){
+  
+  pathplanner::NamedCommands::registerCommand("Xstance",std::move(frc2::cmd::Parallel(
+    m_drivetrain.cmdSetXStance()
+  )));
+
   autoChooser = pathplanner::AutoBuilder::buildAutoChooser();
   frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
 }

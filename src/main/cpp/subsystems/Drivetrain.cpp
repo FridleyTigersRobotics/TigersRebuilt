@@ -164,6 +164,10 @@ void Drivetrain::SetXStance(){
 
 }
 
+frc2::CommandPtr Drivetrain::cmdSetXStance(){
+  return RunOnce([this] {SetXStance();});
+}
+
 frc::Pose2d Drivetrain::getPose(){
   return m_poseEstimator.GetEstimatedPosition();
 }
