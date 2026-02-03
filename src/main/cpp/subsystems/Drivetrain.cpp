@@ -42,10 +42,13 @@ frc::Rotation2d Drivetrain::GetGyroRotation() {
 Drivetrain::Drivetrain()
     // Initialize navX with SPI com type and slew-rate limiter rates (scalar/second)
     : m_gyro{studica::AHRS::NavXComType::kMXP_SPI},
+      m_vision{nullptr},
       m_xLimiter{4.0 / units::second_t{1.0}},
       m_yLimiter{4.0 / units::second_t{1.0}},
       m_rotLimiter{5.0 / units::second_t{1.0}} {
   m_gyro.ZeroYaw();
+  VisionPoseEstimator::SetNavX(&m_gyro);
+  VisionPoseEstimator::SetVision(&m_vision);
   ConfigureAutoBuilder();
   frc::SmartDashboard::PutData("Field",&m_field);
 }

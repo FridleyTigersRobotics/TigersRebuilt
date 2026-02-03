@@ -1,121 +1,167 @@
-
 #pragma once
 
-#include <networktables/NetworkTableInstance.h>
+// --- WPILib / vendor includes ---
 #include <networktables/NetworkTable.h>
-#include <cmath>
+#include <networktables/NetworkTableInstance.h>
 
-#include <frc/geometry/Pose2d.h>
 #include <frc/Timer.h>
-#include <units/time.h>
-#include <Eigen/Core>
-#include <studica/AHRS.h>  // navX 2.0
-#include "Vision.h"
-#include "Constants.h"
+#include <frc/geometry/Pose2d.h>
 
+#include <units/time.h>
+
+#include <Eigen/Core>
+#include <studica/AHRS.h>  // navX
+
+// --- Project includes ---
+#include "Constants.h"
+#include "Vision.h"
 
 /**
- * Replacement for ExampleGlobalMeasurementSensor using navX 2.0.
- * Provides a drop-in API for Drivetrain::UpdateOdometry() using PhotonVision.
+ * VisionPoseEstimator
  *
- * Tilt handling: If the robot is tipped too far, vision updates are marked
- * with very large std deviations so the pose estimator trusts odometry more.
- * NetTable displays tilt angle and whether vision was ignored.
+ * A lightweight façade to provide a “drop-in” vision pose to your drivetrain’s
+ * SwerveDrivePoseEstimator update loop. It:
+ *  - Reads the navX pitch/roll to gate vision trust when the robot is tipped.
+ *  - Computes per-measurement standard deviations via Vision (PhotonVision wrapper).
+ *  - Caches last pose, timestamp, and std-devs for the drivetrain to consume.
+ *  - Publishes NetworkTables telemetry (targets/used/ignored, pitch/roll, tilt scale).
+ *
+ * Usage:
+ *   - In Drivetrain ctor: VisionPoseEstimator::SetNavX(&m_gyro);
+ *                         VisionPoseEstimator::SetVision(&m_vision);
+ *   - Each loop:          auto pose = VisionPoseEstimator::GetEstimatedGlobalPose(odometryPose);
+ *                         estimator.AddVisionMeasurement(pose, GetLastTimestamp(), stdDevsArray);
  */
 class VisionPoseEstimator {
  public:
-  /** Sets the Vision subsystem to use */
+  // --------------------------------------------------------------------------
+  // Configuration (call once at robot init)
+  // --------------------------------------------------------------------------
+
+  /** Bind the Vision subsystem (PhotonVision wrapper). */
   static void SetVision(Vision* vision) { m_vision = vision; }
 
-  /** Sets the navX AHRS to read pitch/roll from */
+  /** Bind the navX (for pitch/roll tilt gating). */
   static void SetNavX(studica::AHRS* navx) { m_navx = navx; }
 
-  /**
-   * Returns the latest robot pose from the Vision subsystem.
-   * If no vision is available, returns current odometry pose.
-   *
-   * tiltThresholdDegrees: max allowed tilt (pitch or roll) before reducing confidence
-   */
-  static frc::Pose2d GetEstimatedGlobalPose(const frc::Pose2d& currentPose,
-                                            double tiltThresholdDegrees = constants::Vision::tiltThresholdDegrees) {
-    currentOdometryPose = currentPose;
-    bool visionIgnoredDueToTilt = false;
+  // --------------------------------------------------------------------------
+  // Main API (call every loop from drivetrain)
+  // --------------------------------------------------------------------------
 
+  /**
+   * Returns the latest camera-based robot pose if available; otherwise returns
+   * the provided odometry pose. Also updates timestamp/std-devs caches.
+   *
+   * @param currentPose           Current odometry/estimator pose.
+   * @param tiltThresholdDegrees  Max |pitch| or |roll| before vision is de-weighted.
+   */
+  static frc::Pose2d GetEstimatedGlobalPose(
+      const frc::Pose2d& currentPose,
+      double tiltThresholdDegrees = constants::Vision::kTiltThresholdDegrees) {
+    currentOdometryPose = currentPose;
+
+    // --- Read/publish navX tilt ONCE so entries always update ---
+    double pitchDeg = 0.0;
+    double rollDeg  = 0.0;
+    if (m_navx) {
+      pitchDeg = m_navx->GetPitch();  // degrees
+      rollDeg  = m_navx->GetRoll();   // degrees
+    }
+    VisionNetTable->PutNumber("RobotPitch", pitchDeg);
+    VisionNetTable->PutNumber("RobotRoll",  rollDeg);
+
+    // Default telemetry values (updated below if vision succeeds)
+    VisionNetTable->PutNumber("VisionTiltScale", 1.0);
+
+    // --- Try to form a vision estimate ---
     if (m_vision) {
       auto result = m_vision->GetLatestResult();
       if (result.HasTargets()) {
-        auto& estimator = m_vision->GetEstimator();  // public getter
-        auto visionEst = estimator.EstimateCoprocMultiTagPose(result);
+        auto& estimator = m_vision->GetEstimator();
+        auto visionEst  = estimator.EstimateCoprocMultiTagPose(result);
         if (!visionEst) {
           visionEst = estimator.EstimateLowestAmbiguityPose(result);
         }
 
         if (visionEst) {
-          // Check robot tilt
-          double pitch = 0.0, roll = 0.0;
-          if (m_navx) {
-            pitch = m_navx->GetPitch();  // degrees
-            roll  = m_navx->GetRoll();   // degrees
-            if (std::abs(pitch) > tiltThresholdDegrees ||
-                std::abs(roll) > tiltThresholdDegrees) {
-              visionIgnoredDueToTilt = true;
-            }
-          }
+          // Cache pose & timestamp (explicit seconds)
+          lastPose      = visionEst->estimatedPose.ToPose2d();
+          lastTimestamp = units::second_t{visionEst->timestamp};
 
-          lastPose = visionEst->estimatedPose.ToPose2d();
-          lastTimestamp = visionEst->timestamp;
+          // Base stddevs from Vision heuristic: [x (m), y (m), theta (rad)]
           lastStdDevs = m_vision->GetEstimationStdDevs(lastPose);
 
-          if (visionIgnoredDueToTilt) {
-            lastStdDevs *= 1000;  // effectively ignore vision (kept as-is)
+          // --- Smooth tilt scaling (instead of hard ×1000) ---
+          // Scale grows linearly with degrees beyond threshold, clamped to kTiltMax.
+          // Tunables:
+          constexpr double kTiltGain = constants::Vision::kTiltGainPerDeg;  // scale per extra degree beyond threshold
+          constexpr double kTiltMax  = constants::Vision::kTiltMaxScale; // cap to keep estimator numerically stable
+
+          const double maxAbsTilt = std::max(std::abs(pitchDeg), std::abs(rollDeg));
+          const bool   overTilt   = (maxAbsTilt > tiltThresholdDegrees);
+
+          if (overTilt) {
+            const double over   = maxAbsTilt - tiltThresholdDegrees; // deg beyond threshold
+            double scale        = 1.0 + kTiltGain * over;            // linear ramp
+            if (scale > kTiltMax) scale = kTiltMax;
+            lastStdDevs *= scale;
+            VisionNetTable->PutNumber("VisionTiltScale", scale);
           }
 
-          // NetTable logging (clearer flags)
+          // Telemetry
           VisionNetTable->PutBoolean("VisionHasTargets", true);
-          VisionNetTable->PutBoolean("VisionIgnoredTilt", visionIgnoredDueToTilt);
+          VisionNetTable->PutBoolean("VisionIgnoredTilt", overTilt);
           VisionNetTable->PutBoolean("VisionUsed", true);
-          VisionNetTable->PutNumber("RobotPitch", pitch);
-          VisionNetTable->PutNumber("RobotRoll", roll);
 
           return lastPose;
         }
 
-        // If we had targets but could not produce a pose estimate:
+        // Had targets but couldn't estimate a pose
         VisionNetTable->PutBoolean("VisionHasTargets", true);
         VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
         VisionNetTable->PutBoolean("VisionUsed", false);
-        VisionNetTable->PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
-        VisionNetTable->PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
       }
     }
 
-    // No vision available or estimate failed → fallback to odometry
-    lastPose = currentPose;
-    lastTimestamp = frc::Timer::GetFPGATimestamp();
-    lastStdDevs = Eigen::Matrix<double, 3, 1>{1.0, 1.0, 1.0};
+    // --- Fallback: use odometry as "vision" ---
+    lastPose      = currentPose;
+    lastTimestamp = units::second_t{frc::Timer::GetFPGATimestamp()};
+    lastStdDevs   = Eigen::Matrix<double, 3, 1>{1.0, 1.0, 1.0};
 
-    // Log odometry fallback with clearer flags
     VisionNetTable->PutBoolean("VisionHasTargets", false);
-    VisionNetTable->PutBoolean("VisionIgnoredTilt", false);  // only true when actually gated by tilt
+    VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
     VisionNetTable->PutBoolean("VisionUsed", false);
-    VisionNetTable->PutNumber("RobotPitch", m_navx ? m_navx->GetPitch() : 0.0);
-    VisionNetTable->PutNumber("RobotRoll",  m_navx ? m_navx->GetRoll()  : 0.0);
+    VisionNetTable->PutNumber("VisionTiltScale", 1.0);
 
     return lastPose;
   }
 
-  /** Returns the timestamp for the last vision measurement */
+  // --------------------------------------------------------------------------
+  // Accessors for drivetrain
+  // --------------------------------------------------------------------------
+
+  /** Timestamp (seconds) for the last vision measurement. */
   static units::second_t GetLastTimestamp() { return lastTimestamp; }
 
-  /** Returns standard deviations for the last vision measurement */
+  /** Std-devs for the last vision measurement: [x(m), y(m), theta(rad)]. */
   static Eigen::Matrix<double, 3, 1> GetLastStdDevs() { return lastStdDevs; }
 
  private:
-  static inline Vision* m_vision = nullptr;
-  static inline studica::AHRS* m_navx = nullptr;  // navX 2.0
-  static inline frc::Pose2d currentOdometryPose{};
-  static inline frc::Pose2d lastPose{};
-  static inline units::second_t lastTimestamp = 0_s;
+  // --------------------------------------------------------------------------
+  // Bound devices / subsystems
+  // --------------------------------------------------------------------------
+  static inline Vision*        m_vision = nullptr;
+  static inline studica::AHRS* m_navx   = nullptr;
+
+  // --------------------------------------------------------------------------
+  // Cached data for the drivetrain
+  // --------------------------------------------------------------------------
+  static inline frc::Pose2d          currentOdometryPose{};
+  static inline frc::Pose2d          lastPose{};
+  static inline units::second_t      lastTimestamp{0_s};
   static inline Eigen::Matrix<double, 3, 1> lastStdDevs{};
-  static inline std::shared_ptr<nt::NetworkTable> VisionNetTable = nt::NetworkTableInstance::GetDefault().GetTable("2227/Vision");
+
+  // NetworkTables path for vision telemetry
+  static inline std::shared_ptr<nt::NetworkTable> VisionNetTable =
+      nt::NetworkTableInstance::GetDefault().GetTable("2227/Vision");
 };

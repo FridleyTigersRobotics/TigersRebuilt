@@ -25,6 +25,7 @@
 #include <units/dimensionless.h>  // scalar, scalar_t
 
 #include "SwerveModule.h"
+#include "Vision.h"
 
 namespace DriveIds {
 constexpr int kFL_Drive = 4;
@@ -118,6 +119,8 @@ class Drivetrain : public frc2::SubsystemBase {
 
   // navX (Studica) — constructed in .cpp with com type
   studica::AHRS m_gyro;
+
+  Vision m_vision;
 
   frc::SwerveDriveKinematics<4> m_kinematics{
       m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation};
