@@ -3,7 +3,7 @@ Files placed in this directory will be deployed to the RoboRIO into the
   function from the 'frc/Filesystem.h' header to get a proper path relative to the deploy
   directory.
 
-
+---------------------------------------------------------------------------------------------------------------------------
 
   1) Quick sanity checks (first power‑on)
 
@@ -55,3 +55,237 @@ bump CANcoder status update frequency safely,
 or draft the Pigeon2 swap (drop‑in replacement for AnalogGyro with better yaw stability)?
 
 Tell me which you prefer and I’ll drop in the code snippets ready to paste.
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Guide: Adding a Second Camera to the Current Vision Architecture
+This guide explains how to add a second AprilTag camera to your existing architecture that uses:
+
+PhotonVision
+Vision
+VisionPoseEstimator
+WPILib SwerveDrivePoseEstimator
+
+The most important idea is this:
+You do not combine camera poses yourself.
+Each camera produces its own pose measurement.
+You add all valid measurements to the same pose estimator, and WPILib fuses them.
+
+STEP 1 — Define the second camera’s mounting on the robot
+Goes in: Constants.h (and/or Constants.cpp if you split definitions)
+You already define one camera transform. Replace it with two separate transforms (front and rear, or left/right).
+The transforms represent ROBOT → CAMERA.
+Robot coordinate frame:
+
++X forward
++Y left
++Z up
+Pitch down = negative
+Yaw right = negative
+
+Code block (Constants.h)________________________________________________________________________
+namespace constants {
+namespace Vision {
+
+inline constexpr std::string_view kFrontCamName{"FrontCam"};
+inline constexpr std::string_view kRearCamName{"RearCam"};
+
+inline const frc::Transform3d kRobotToCamFront{
+    frc::Translation3d{0.50_m,  0.00_m, 0.50_m},
+    frc::Rotation3d{0_rad, -30_deg, 0_rad}
+};
+
+inline const frc::Transform3d kRobotToCamRear{
+    frc::Translation3d{-0.40_m, 0.00_m, 0.45_m},
+    frc::Rotation3d{0_rad, -25_deg, 180_deg}
+};
+
+inline const frc::AprilTagFieldLayout kTagLayout{
+    frc::AprilTagFieldLayout::LoadField(
+        frc::AprilTagField::k2026RebuiltWelded)
+};
+
+inline constexpr double kTiltThresholdDegrees = 15.0;
+inline constexpr double kTiltGainPerDeg = 0.15;
+inline constexpr double kTiltMaxScale = 100.0;
+
+}  // namespace Vision
+}  // namespace constants
+_______________________________________________________________________
+
+Nothing else in the robot code needs to know camera mounting geometry.
+
+STEP 2 — Update the Vision subsystem to support two cameras
+Goes in: Vision.h / Vision.cpp
+You currently have:
+
+One PhotonCamera
+One PhotonPoseEstimator
+
+You will create:
+
+Two cameras
+Two pose estimators
+One shared processing function
+
+Each camera is processed independently.
+
+Code block (Vision.h)__________________________________________________
+class Vision {
+ public:
+  Vision() = default;
+
+  struct CameraEstimate {
+    frc::Pose2d pose;
+    units::second_t timestamp;
+    Eigen::Matrix<double, 3, 1> stdDevs;
+  };
+
+  std::optional<CameraEstimate> GetFrontEstimate();
+  std::optional<CameraEstimate> GetRearEstimate();
+
+ private:
+  photon::PhotonCamera m_frontCam{constants::Vision::kFrontCamName};
+  photon::PhotonCamera m_rearCam{constants::Vision::kRearCamName};
+
+  photon::PhotonPoseEstimator m_frontEstimator{
+      constants::Vision::kTagLayout,
+      constants::Vision::kRobotToCamFront};
+
+  photon::PhotonPoseEstimator m_rearEstimator{
+      constants::Vision::kTagLayout,
+      constants::Vision::kRobotToCamRear};
+
+  std::optional<CameraEstimate> ProcessCamera(
+      photon::PhotonCamera& cam,
+      photon::PhotonPoseEstimator& estimator);
+
+  Eigen::Matrix<double, 3, 1> ComputeAutoStdDevs(
+      const photon::PhotonPipelineResult& result,
+      const frc::Pose2d& pose);
+};
+_________________________________________________________________________
+
+Code block (Vision.cpp)___________________________________________________
+std::optional<Vision::CameraEstimate> Vision::GetFrontEstimate() {
+  return ProcessCamera(m_frontCam, m_frontEstimator);
+}
+
+std::optional<Vision::CameraEstimate> Vision::GetRearEstimate() {
+  return ProcessCamera(m_rearCam, m_rearEstimator);
+}
+
+std::optional<Vision::CameraEstimate> Vision::ProcessCamera(
+    photon::PhotonCamera& cam,
+    photon::PhotonPoseEstimator& estimator) {
+
+  auto result = cam.GetLatestResult();
+  if (!result.HasTargets()) return std::nullopt;
+
+  auto est = estimator.EstimateCoprocMultiTagPose(result);
+  if (!est) {
+    est = estimator.EstimateLowestAmbiguityPose(result);
+  }
+  if (!est) return std::nullopt;
+
+  CameraEstimate out;
+  out.pose = est->estimatedPose.ToPose2d();
+  out.timestamp = units::second_t{est->timestamp};
+  out.stdDevs = ComputeAutoStdDevs(result, out.pose);
+
+  return out;
+}
+_________________________________________________________________________
+STEP 3 — Feed both cameras into the pose estimator
+Goes in: Drivetrain::UpdateOdometry()
+You already add vision once per loop.
+Now you will potentially add two measurements per loop.
+
+Code block (Drivetrain.cpp)_________________________________________________
+void Drivetrain::UpdateOdometry() {
+  m_poseEstimator.Update(
+      GetGyroRotation(),
+      {m_frontLeft.GetPosition(), m_frontRight.GetPosition(),
+       m_backLeft.GetPosition(),  m_backRight.GetPosition()});
+
+  const double pitch = m_gyro.GetPitch();
+  const double roll  = m_gyro.GetRoll();
+
+  auto frontEst = m_vision.GetFrontEstimate();
+  auto rearEst  = m_vision.GetRearEstimate();
+
+  if (frontEst) {
+    auto stdDevs = frontEst->stdDevs;
+
+    const double maxTilt = std::max(std::abs(pitch), std::abs(roll));
+    if (maxTilt > constants::Vision::kTiltThresholdDegrees) {
+      double scale =
+          1.0 + constants::Vision::kTiltGainPerDeg *
+          (maxTilt - constants::Vision::kTiltThresholdDegrees);
+      scale = std::min(scale, constants::Vision::kTiltMaxScale);
+      stdDevs *= scale;
+    }
+
+    m_poseEstimator.AddVisionMeasurement(
+        frontEst->pose,
+        frontEst->timestamp,
+        {stdDevs(0), stdDevs(1), stdDevs(2)});
+  }
+
+  if (rearEst) {
+    auto stdDevs = rearEst->stdDevs;
+
+    const double maxTilt = std::max(std::abs(pitch), std::abs(roll));
+    if (maxTilt > constants::Vision::kTiltThresholdDegrees) {
+      double scale =
+          1.0 + constants::Vision::kTiltGainPerDeg *
+          (maxTilt - constants::Vision::kTiltThresholdDegrees);
+      scale = std::min(scale, constants::Vision::kTiltMaxScale);
+      stdDevs *= scale;
+    }
+
+    m_poseEstimator.AddVisionMeasurement(
+        rearEst->pose,
+        rearEst->timestamp,
+        {stdDevs(0), stdDevs(1), stdDevs(2)});
+  }
+}
+__________________________________________________________________________
+STEP 4 — Telemetry (recommended, optional)
+Goes in: Drivetrain or VisionPoseEstimator______________________________________________________
+VisionNetTable->PutBoolean("FrontCam/HasEstimate", frontEst.has_value());
+VisionNetTable->PutBoolean("RearCam/HasEstimate",  rearEst.has_value());
+_______________________________________________________________________________________________
+This makes it immediately obvious which camera is contributing.
+
+WHAT DOES NOT CHANGE
+
+PathPlanner configuration
+Odometry math
+Field coordinate system
+VisionPoseEstimator tilt logic principles
+AprilTag layout
+Drivetrain kinematics
+
+You are only feeding more measurements.
+
+COMMON MISTAKES TO AVOID
+Do not average poses
+Do not pick “the best camera”
+Do not flip field frames
+Do not disable one camera permanently
+Do not fuse cameras manually
+Let the estimator do the fusion.
+
+FINAL SUMMARY
+To add a second camera:
+
+Define a second robot‑to‑camera transform
+Create a second PhotonCamera
+Create a second PhotonPoseEstimator
+Process each camera independently
+Add all valid measurements to the same pose estimator
+
+Your existing architecture is already designed to support this cleanly.
