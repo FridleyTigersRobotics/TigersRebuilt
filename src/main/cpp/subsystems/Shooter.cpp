@@ -16,7 +16,7 @@ using constants::Shooter::kFF_kV;
 // using constants::Shooter::kFF_kA;  // Uncomment if you decide to use kA
 
 Shooter::Shooter() {
-  // ---- Safety first: ensure stopped on startup ----
+  // ---- ensure stopped on startup ----
   m_targetRPM.reset();             // no setpoint active
   m_shooterMotor.Set(0.0);         // force output = 0 now (before Configure)
   m_cl.SetIAccum(0.0);             // clear integral accumulator
