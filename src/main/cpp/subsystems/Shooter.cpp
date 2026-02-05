@@ -110,6 +110,7 @@ void Shooter::UpdateNetTable() {
       "RPMError",
       m_targetRPM.has_value() ? (*m_targetRPM - m_lastMeasuredRPM) : 0.0);
 
+  ShooterNetTable->PutBoolean("AtSpeed", AtSpeed(100.0));
   ShooterNetTable->PutNumber("AppliedOutput", m_lastAppliedOutput);
   ShooterNetTable->PutNumber("BusVoltage", m_shooterMotor.GetBusVoltage());
   ShooterNetTable->PutNumber("OutputCurrent", m_shooterMotor.GetOutputCurrent());
