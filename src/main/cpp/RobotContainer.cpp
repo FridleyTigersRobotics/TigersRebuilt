@@ -61,8 +61,13 @@ void RobotContainer::ConfigureBindings() {
   m_driverController.POV(0).OnTrue(
       frc2::InstantCommand([this]{
         m_drivetrain.ZeroGyro();
-        m_driverController.GetHID().SetRumble(frc::GenericHID::RumbleType::kBothRumble, 1.0);
+        //m_driverController.GetHID().SetRumble(frc::GenericHID::RumbleType::kBothRumble, 1.0);
       }, {&m_drivetrain}).ToPtr());
+
+  //run shooter
+  m_driverController.A().OnTrue(m_shooter.SetRPMCommand(2000.0));
+  m_driverController.A().OnFalse(m_shooter.StopCommand());
+
 
 }
 
