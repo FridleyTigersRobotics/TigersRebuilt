@@ -6,6 +6,8 @@
 #include <frc2/command/Commands.h>     // frc2::cmd::RunOnce
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <rev/SparkMax.h>
+#include <networktables/NetworkTable.h>
+#include <networktables/NetworkTableInstance.h>
 
 #include "Constants.h"
 
@@ -40,4 +42,7 @@ class Shooter : public frc2::SubsystemBase {
   std::optional<double> m_targetRPM;
   double m_lastMeasuredRPM{0.0};
   double m_lastAppliedOutput{0.0};
+
+  std::shared_ptr<nt::NetworkTable> ShooterNetTable =
+      nt::NetworkTableInstance::GetDefault().GetTable("2227/Shooter");
 };

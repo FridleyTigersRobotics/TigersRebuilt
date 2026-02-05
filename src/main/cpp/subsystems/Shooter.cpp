@@ -103,23 +103,23 @@ void Shooter::Periodic() {
 }
 
 void Shooter::UpdateNetTable() {
-  frc::SmartDashboard::PutBoolean("Shooter/ClosedLoopEnabled", m_targetRPM.has_value());
-  frc::SmartDashboard::PutNumber("Shooter/TargetRPM", m_targetRPM.value_or(0.0));
-  frc::SmartDashboard::PutNumber("Shooter/MeasuredRPM", m_lastMeasuredRPM);
-  frc::SmartDashboard::PutNumber(
-      "Shooter/RPMError",
+  ShooterNetTable->PutBoolean("ClosedLoopEnabled", m_targetRPM.has_value());
+  ShooterNetTable->PutNumber("TargetRPM", m_targetRPM.value_or(0.0));
+  ShooterNetTable->PutNumber("MeasuredRPM", m_lastMeasuredRPM);
+  ShooterNetTable->PutNumber(
+      "RPMError",
       m_targetRPM.has_value() ? (*m_targetRPM - m_lastMeasuredRPM) : 0.0);
 
-  frc::SmartDashboard::PutNumber("Shooter/AppliedOutput", m_lastAppliedOutput);
-  frc::SmartDashboard::PutNumber("Shooter/BusVoltage", m_shooterMotor.GetBusVoltage());
-  frc::SmartDashboard::PutNumber("Shooter/OutputCurrent", m_shooterMotor.GetOutputCurrent());
-  frc::SmartDashboard::PutNumber("Shooter/MotorTempC", m_shooterMotor.GetMotorTemperature());
+  ShooterNetTable->PutNumber("AppliedOutput", m_lastAppliedOutput);
+  ShooterNetTable->PutNumber("BusVoltage", m_shooterMotor.GetBusVoltage());
+  ShooterNetTable->PutNumber("OutputCurrent", m_shooterMotor.GetOutputCurrent());
+  ShooterNetTable->PutNumber("MotorTempC", m_shooterMotor.GetMotorTemperature());
 
   // Faults/Warnings (publish raw bitmasks + a couple booleans)
   auto faults       = m_shooterMotor.GetFaults();
   auto stickyFaults = m_shooterMotor.GetStickyFaults();
-  frc::SmartDashboard::PutNumber("Shooter/FaultsRaw", faults.rawBits);
-  frc::SmartDashboard::PutNumber("Shooter/StickyFaultsRaw", stickyFaults.rawBits);
-  frc::SmartDashboard::PutBoolean("Shooter/Fault_Sensor", faults.sensor);
-  frc::SmartDashboard::PutBoolean("Shooter/Fault_Temp", faults.temperature);
+  ShooterNetTable->PutNumber("FaultsRaw", faults.rawBits);
+  ShooterNetTable->PutNumber("StickyFaultsRaw", stickyFaults.rawBits);
+  ShooterNetTable->PutBoolean("Fault_Sensor", faults.sensor);
+  ShooterNetTable->PutBoolean("Fault_Temp", faults.temperature);
 }
