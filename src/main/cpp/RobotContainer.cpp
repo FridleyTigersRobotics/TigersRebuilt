@@ -65,7 +65,7 @@ void RobotContainer::ConfigureBindings() {
       }, {&m_drivetrain}).ToPtr());
 
   //run shooter
-  m_driverController.A().OnTrue(m_shooter.SetRPMCommand(2000.0));
+  m_driverController.A().OnTrue(m_shooter.SetRPMCommand(5000.0));
   m_driverController.A().OnFalse(m_shooter.StopCommand());
 
 
