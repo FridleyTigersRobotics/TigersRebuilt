@@ -55,7 +55,7 @@ inline constexpr int kDriverControllerPort = 0;
 namespace Vision {
 
 // Name that matches the PhotonVision camera (exact string helps when multiple cams exist)
-inline constexpr std::string_view kCameraName{"Arducam OV9281 USB Camera 001"};
+inline constexpr std::string_view kCameraName{"Arducam_OV9281_USB_Camera_001"};
 // inline constexpr std::string_view kCameraNameAlt{"Arducam OV9281 USB Camera 002"};
 
 // Camera pose on robot: Transform from ROBOT frame -> CAMERA frame.
@@ -68,13 +68,13 @@ inline constexpr std::string_view kCameraName{"Arducam OV9281 USB Camera 001"};
 //   - Camera pitched DOWN by 30 degrees       (  pitch = -30° )
 inline const frc::Transform3d kRobotToCam{
     frc::Translation3d{
-        0.50_m,   // +X forward from robot center
-        0.00_m,   // +Y left  (use negative for right)
-        0.50_m    // +Z up
+        0.075_m,   // +X forward from robot center
+        0.280_m,   // +Y left  (use negative for right)
+        0.080_m    // +Z up
     },
     frc::Rotation3d{
         0_rad,     // roll
-       -30_deg,    // pitch (DOWN is negative)
+        15_deg,    // pitch (DOWN is negative)
         0_rad      // yaw   (LEFT is positive, RIGHT is negative)
     }
 };
