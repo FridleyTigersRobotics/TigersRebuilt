@@ -54,6 +54,32 @@ Shooter::Shooter() {
 
   // Optional: clear sticky faults at boot
   m_shooterMotor.ClearFaults();
+  
+  
+  
+// ---------- Follower (mirror the leader on-device) ----------
+{
+  rev::spark::SparkMaxConfig fcfg;
+
+  // Make this controller follow the leader (m_shooterMotor).
+  // Set the second argument to 'true' if the follower must spin opposite.
+  fcfg.Follow(m_shooterMotor, /*invert=*/true);
+
+  // (Optional but recommended) duplicate basic electrical safety on follower
+  fcfg.SmartCurrentLimit(kSmartCurrentLimit);
+  fcfg.VoltageCompensation(kVoltageCompSaturation);
+  fcfg.OpenLoopRampRate(kOpenLoopRampSeconds);
+  fcfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kCoast);
+
+  m_shooterMotorFollower.Configure(
+      fcfg,
+      rev::ResetMode::kResetSafeParameters,
+      rev::PersistMode::kPersistParameters);
+
+  // Optional: clear sticky faults
+  m_shooterMotorFollower.ClearFaults();
+}
+
 
   UpdateNetTable();
 }

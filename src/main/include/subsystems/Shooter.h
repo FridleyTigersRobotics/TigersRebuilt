@@ -34,6 +34,10 @@ class Shooter : public frc2::SubsystemBase {
       constants::Shooter::kShooterCanId,
       rev::spark::SparkLowLevel::MotorType::kBrushless};
 
+  rev::spark::SparkMax m_shooterMotorFollower{
+      constants::Shooter::kShooterFolllowerCanId,
+      rev::spark::SparkLowLevel::MotorType::kBrushless};
+
   // Handles (owned by Spark)
   rev::spark::SparkRelativeEncoder      m_encoder = m_shooterMotor.GetEncoder();
   rev::spark::SparkClosedLoopController m_cl      = m_shooterMotor.GetClosedLoopController();

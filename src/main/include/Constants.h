@@ -97,6 +97,7 @@ inline constexpr units::millisecond_t msStaleCam = units::millisecond_t{250};
 namespace Shooter {
   // motor Can ID
   inline constexpr int kShooterCanId = 21;
+  inline constexpr int kShooterFolllowerCanId = 22;
 
   // Electrical & safety (unchanged if you already set these)
   inline constexpr bool   kInvertMotor            = false;
