@@ -129,26 +129,24 @@ void Drivetrain::UpdateOdometry() {
       {m_frontLeft.GetPosition(), m_frontRight.GetPosition(),
        m_backLeft.GetPosition(), m_backRight.GetPosition()});
 
+  // Get one candidate vision pose (may be odometry fallback if no new vision)
   const frc::Pose2d visionPose =
-      VisionPoseEstimator::GetEstimatedGlobalPose(
-          m_poseEstimator.GetEstimatedPosition());
-
-  const units::second_t visionTimestamp =
-      VisionPoseEstimator::GetLastTimestamp();
-
-  const Eigen::Matrix<double, 3, 1> stdDevs =
-      VisionPoseEstimator::GetLastStdDevs();
-
-  const wpi::array<double, 3> visionStdDevArray{stdDevs(0), stdDevs(1), stdDevs(2)};
-  m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
-
-  // Optional telemetry
-  const auto visPose =
       VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition());
-  DrivetrainNetTable->PutNumber("Vision X", visPose.X().to<double>());
-  DrivetrainNetTable->PutNumber("Vision Y", visPose.Y().to<double>());
-  DrivetrainNetTable->PutNumber("Vision Heading", visPose.Rotation().Degrees().to<double>());
+  const units::second_t visionTimestamp = VisionPoseEstimator::GetLastTimestamp();
+  const Eigen::Matrix<double, 3, 1> stdDevs = VisionPoseEstimator::GetLastStdDevs();
+  const wpi::array<double, 3> visionStdDevArray{stdDevs(0), stdDevs(1), stdDevs(2)};
 
+  // Only fuse when the timestamp advanced (i.e., a new vision measurement arrived)
+  static units::second_t lastUsedTs{0_s};
+  if (visionTimestamp > lastUsedTs) {
+    m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
+    lastUsedTs = visionTimestamp;
+  }
+
+  // Optional telemetry: reuse the same pose we already pulled this loop
+  DrivetrainNetTable->PutNumber("Vision X", visionPose.X().to<double>());
+  DrivetrainNetTable->PutNumber("Vision Y", visionPose.Y().to<double>());
+  DrivetrainNetTable->PutNumber("Vision Heading", visionPose.Rotation().Degrees().to<double>());
   DrivetrainNetTable->PutNumber("navX Yaw (deg)", m_gyro.GetYaw());
   frc::Rotation2d rotationvalue = GetGyroRotation();
   double rotationdegrees = rotationvalue.Degrees().value();

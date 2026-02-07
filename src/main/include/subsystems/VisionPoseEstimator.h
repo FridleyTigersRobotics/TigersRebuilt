@@ -55,86 +55,96 @@ class VisionPoseEstimator {
    * @param currentPose           Current odometry/estimator pose.
    * @param tiltThresholdDegrees  Max |pitch| or |roll| before vision is de-weighted.
    */
-  static frc::Pose2d GetEstimatedGlobalPose(
-      const frc::Pose2d& currentPose,
-      double tiltThresholdDegrees = constants::Vision::kTiltThresholdDegrees) {
-    currentOdometryPose = currentPose;
+static frc::Pose2d GetEstimatedGlobalPose(
+    const frc::Pose2d& currentPose,
+    double tiltThresholdDegrees = constants::Vision::kTiltThresholdDegrees) {
+  currentOdometryPose = currentPose;
 
-    // --- Read/publish navX tilt ONCE so entries always update ---
-    double pitchDeg = 0.0;
-    double rollDeg  = 0.0;
-    if (m_navx) {
-      pitchDeg = m_navx->GetPitch();  // degrees
-      rollDeg  = m_navx->GetRoll();   // degrees
-    }
-    VisionNetTable->PutNumber("RobotPitch", pitchDeg);
-    VisionNetTable->PutNumber("RobotRoll",  rollDeg);
-
-    // Default telemetry values (updated below if vision succeeds)
-    VisionNetTable->PutNumber("VisionTiltScale", 1.0);
-
-    // --- Try to form a vision estimate ---
-    if (m_vision) {
-      auto result = m_vision->GetLatestResult();
-      if (result.HasTargets()) {
-        auto& estimator = m_vision->GetEstimator();
-        auto visionEst  = estimator.EstimateCoprocMultiTagPose(result);
-        if (!visionEst) {
-          visionEst = estimator.EstimateLowestAmbiguityPose(result);
-        }
-
-        if (visionEst) {
-          // Cache pose & timestamp (explicit seconds)
-          lastPose      = visionEst->estimatedPose.ToPose2d();
-          lastTimestamp = units::second_t{visionEst->timestamp};
-
-          // Base stddevs from Vision heuristic: [x (m), y (m), theta (rad)]
-          lastStdDevs = m_vision->GetEstimationStdDevs(lastPose);
-
-          // --- Smooth tilt scaling (instead of hard ×1000) ---
-          // Scale grows linearly with degrees beyond threshold, clamped to kTiltMax.
-          // Tunables:
-          constexpr double kTiltGain = constants::Vision::kTiltGainPerDeg;  // scale per extra degree beyond threshold
-          constexpr double kTiltMax  = constants::Vision::kTiltMaxScale; // cap to keep estimator numerically stable
-
-          const double maxAbsTilt = std::max(std::abs(pitchDeg), std::abs(rollDeg));
-          const bool   overTilt   = (maxAbsTilt > tiltThresholdDegrees);
-
-          if (overTilt) {
-            const double over   = maxAbsTilt - tiltThresholdDegrees; // deg beyond threshold
-            double scale        = 1.0 + kTiltGain * over;            // linear ramp
-            if (scale > kTiltMax) scale = kTiltMax;
-            lastStdDevs *= scale;
-            VisionNetTable->PutNumber("VisionTiltScale", scale);
-          }
-
-          // Telemetry
-          VisionNetTable->PutBoolean("VisionHasTargets", true);
-          VisionNetTable->PutBoolean("VisionIgnoredTilt", overTilt);
-          VisionNetTable->PutBoolean("VisionUsed", true);
-
-          return lastPose;
-        }
-
-        // Had targets but couldn't estimate a pose
-        VisionNetTable->PutBoolean("VisionHasTargets", true);
-        VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
-        VisionNetTable->PutBoolean("VisionUsed", false);
-      }
-    }
-
-    // --- Fallback: use odometry as "vision" ---
-    lastPose      = currentPose;
-    lastTimestamp = units::second_t{frc::Timer::GetFPGATimestamp()};
-    lastStdDevs   = Eigen::Matrix<double, 3, 1>{1.0, 1.0, 1.0};
-
-    VisionNetTable->PutBoolean("VisionHasTargets", false);
-    VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
-    VisionNetTable->PutBoolean("VisionUsed", false);
-    VisionNetTable->PutNumber("VisionTiltScale", 1.0);
-
-    return lastPose;
+  // Read/publish navX tilt once so entries always update
+  double pitchDeg = 0.0;
+  double rollDeg = 0.0;
+  if (m_navx) {
+    pitchDeg = m_navx->GetPitch(); // degrees
+    rollDeg = m_navx->GetRoll();   // degrees
   }
+  VisionNetTable->PutNumber("RobotPitch", pitchDeg);
+  VisionNetTable->PutNumber("RobotRoll", rollDeg);
+
+  // Default telemetry (updated below if vision succeeds)
+  VisionNetTable->PutNumber("VisionTiltScale", 1.0);
+
+  const units::second_t now{frc::Timer::GetFPGATimestamp()};
+
+  // Try to form a vision estimate
+  if (m_vision) {
+    auto result = m_vision->GetLatestResult(); // your Vision wrapper already avoids stale cache
+    if (result.HasTargets()) {
+      auto& estimator = m_vision->GetEstimator();
+      auto visionEst = estimator.EstimateCoprocMultiTagPose(result);
+      if (!visionEst) {
+        visionEst = estimator.EstimateLowestAmbiguityPose(result);
+      }
+      if (visionEst) {
+        const units::second_t newTs{visionEst->timestamp};
+
+        // Freshness guard (~250 ms)
+        if ((now - newTs) > constants::Vision::msStaleCam) {
+          VisionNetTable->PutBoolean("VisionHasTargets", true);
+          VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
+          VisionNetTable->PutBoolean("VisionUsed", false);
+          return currentOdometryPose; // no timestamp advance
+        }
+
+        // Duplicate/out-of-order guard
+        if (newTs <= lastTimestamp) {
+          VisionNetTable->PutBoolean("VisionHasTargets", true);
+          VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
+          VisionNetTable->PutBoolean("VisionUsed", false);
+          return currentOdometryPose; // no timestamp advance
+        }
+
+        // Accept: cache pose & timestamp
+        lastPose = visionEst->estimatedPose.ToPose2d();
+        lastTimestamp = newTs;
+
+        // Base stddevs from Vision heuristic
+        lastStdDevs = m_vision->GetEstimationStdDevs(lastPose);
+
+        // Smooth tilt scaling
+        constexpr double kTiltGain = constants::Vision::kTiltGainPerDeg;
+        constexpr double kTiltMax  = constants::Vision::kTiltMaxScale;
+        const double maxAbsTilt = std::max(std::abs(pitchDeg), std::abs(rollDeg));
+        const bool overTilt = (maxAbsTilt > tiltThresholdDegrees);
+        if (overTilt) {
+          const double over = maxAbsTilt - tiltThresholdDegrees;
+          double scale = 1.0 + kTiltGain * over;
+          if (scale > kTiltMax) scale = kTiltMax;
+          lastStdDevs *= scale;
+          VisionNetTable->PutNumber("VisionTiltScale", scale);
+        }
+
+        VisionNetTable->PutBoolean("VisionHasTargets", true);
+        VisionNetTable->PutBoolean("VisionIgnoredTilt", overTilt);
+        VisionNetTable->PutBoolean("VisionUsed", true);
+        return lastPose;
+      }
+
+      // Had targets but couldn't estimate a pose
+      VisionNetTable->PutBoolean("VisionHasTargets", true);
+      VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
+      VisionNetTable->PutBoolean("VisionUsed", false);
+    }
+  }
+
+  // Fallback: use odometry for this loop WITHOUT advancing lastTimestamp
+  lastPose = currentPose;
+  lastStdDevs = Eigen::Matrix<double, 3, 1>{1.0, 1.0, 1.0};
+  VisionNetTable->PutBoolean("VisionHasTargets", false);
+  VisionNetTable->PutBoolean("VisionIgnoredTilt", false);
+  VisionNetTable->PutBoolean("VisionUsed", false);
+  VisionNetTable->PutNumber("VisionTiltScale", 1.0);
+  return lastPose;
+}
 
   // --------------------------------------------------------------------------
   // Accessors for drivetrain

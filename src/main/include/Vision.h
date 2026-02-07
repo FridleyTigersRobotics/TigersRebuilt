@@ -3,25 +3,30 @@
 #include <functional>
 #include <cmath>
 #include <limits>
+#include <numbers>
+
+#include <Eigen/Core>
+
+#include <frc/Timer.h>
+#include <frc/geometry/Pose2d.h>
+#include <frc/geometry/Translation2d.h>
+
+#include <units/time.h>
+#include <units/length.h>
 
 #include <frc/apriltag/AprilTagFieldLayout.h>
 #include <photon/PhotonCamera.h>
 #include <photon/PhotonPoseEstimator.h>
 #include <photon/targeting/PhotonPipelineResult.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/geometry/Translation2d.h>
-#include <units/time.h>
-#include <units/length.h>
-#include <numbers>
 
 #include "Constants.h"
 
 /**
  * Vision
  *
- * - Provides direct access to the newest PhotonVision frame (cached fallback).
- * - Optional Periodic() path can push pose estimates to a consumer callback.
- * - Supplies a heuristic for per-measurement standard deviations.
+ * - Provides the camera's current frame based on unread results (no stale caching).
+ * - Optional Periodic() can push pose estimates to a consumer callback.
+ * - Provides a heuristic for per-measurement standard deviations.
  */
 class Vision {
  public:
@@ -30,39 +35,62 @@ class Vision {
 
   explicit Vision(EstConsumer estConsumer) : estConsumer{estConsumer} {}
 
-  // Return newest unread frame if available; otherwise return cached result.
+  /**
+   * Return the newest result from the unread queue if present; otherwise return
+   * an empty result (HasTargets=false). This avoids replaying stale frames and
+   * avoids deprecated PhotonCamera::GetLatestResult().
+   */
   photon::PhotonPipelineResult GetLatestResult() {
-    auto unread = camera.GetAllUnreadResults();      // recommended API
+    auto unread = camera.GetAllUnreadResults();            // non-deprecated
     if (!unread.empty()) {
-      m_latestResult = unread.back();                // newest frame
+      return unread.back();                                // newest frame this loop
     }
-    return m_latestResult;                           // cached fallback
+    return photon::PhotonPipelineResult{};                 // no new data -> empty
   }
 
-  // Optional: produce pose estimates for each unread frame.
+  /**
+   * Optional periodic estimator:
+   * - Iterates all unread frames this loop.
+   * - Forms a pose estimate for each.
+   * - Drops estimates older than ~250 ms by comparing the POSE timestamp to FPGA time.
+   * - Emits pose + timestamp + auto std-devs to the provided consumer.
+   */
   void Periodic() {
     for (const auto& result : camera.GetAllUnreadResults()) {
-      m_latestResult = result;
       auto visionEst = photonEstimator.EstimateCoprocMultiTagPose(result);
       if (!visionEst) {
         visionEst = photonEstimator.EstimateLowestAmbiguityPose(result);
       }
-      if (visionEst) {
-        estConsumer(visionEst->estimatedPose.ToPose2d(),
-                    visionEst->timestamp,
-                    ComputeAutoStdDevs(visionEst->estimatedPose.ToPose2d()));
-      }
+      if (!visionEst) continue;
+
+      // Freshness guard using the estimate's timestamp
+      const units::second_t now{frc::Timer::GetFPGATimestamp()};
+      const units::second_t ts{units::second_t{visionEst->timestamp}};
+      if ((now - ts) > constants::Vision::msStaleCam) continue;
+
+      const frc::Pose2d pose2d = visionEst->estimatedPose.ToPose2d();
+      estConsumer(pose2d, ts, ComputeAutoStdDevs(pose2d));
     }
   }
 
-  // Compute [σx (m), σy (m), σθ (rad)] from visible tags and average distance.
+  /**
+   * Compute [σx (m), σy (m), σθ (rad)] from visible tags & average distance.
+   * Uses the newest unread result if available; otherwise treats as no targets.
+   */
   Eigen::Matrix<double, 3, 1> ComputeAutoStdDevs(frc::Pose2d estimatedPose) {
     Eigen::Matrix<double, 3, 1> estStdDevs;
+    constexpr double kBigXY = 10.0;
+    constexpr double kBigTheta = std::numbers::pi;
 
-    constexpr double kBigXY = 10.0;                 // meters (finite "very large")
-    constexpr double kBigTheta = std::numbers::pi;  // radians
+    // Pull the newest unread frame, if any (no deprecations or stale cache).
+    // We intentionally do NOT fall back to any previously cached result.
+    photon::PhotonPipelineResult res{};
+    {
+      auto unread = camera.GetAllUnreadResults();
+      if (!unread.empty()) res = unread.back();
+    }
 
-    const auto& targets = m_latestResult.GetTargets();
+    const auto& targets = res.GetTargets();
     if (targets.empty()) {
       estStdDevs << kBigXY, kBigXY, kBigTheta;
       return estStdDevs;
@@ -71,36 +99,28 @@ class Vision {
     units::meter_t avgDist = 0_m;
     int numTags = 0;
     for (const auto& tgt : targets) {
-      auto tagPose =
-          photonEstimator.GetFieldLayout().GetTagPose(tgt.GetFiducialId());
+      auto tagPose = photonEstimator.GetFieldLayout().GetTagPose(tgt.GetFiducialId());
       if (tagPose) {
         numTags++;
-        avgDist += tagPose->ToPose2d()
-                       .Translation()
-                       .Distance(estimatedPose.Translation());
+        avgDist += tagPose->ToPose2d().Translation().Distance(estimatedPose.Translation());
       }
     }
-
     if (numTags == 0) {
       estStdDevs << kBigXY, kBigXY, kBigTheta;
       return estStdDevs;
     }
-
     avgDist /= numTags;
 
-    // Heuristic scaling: increase with distance, decrease with number of tags.
     double xyStd = std::pow(avgDist.value(), 1.1) / numTags;
     double rotStd = std::pow(avgDist.value(), 1.2) / numTags;
 
-    // Clamp to stable, nonzero ranges.
     xyStd = std::clamp(xyStd, 0.01, kBigXY);
     rotStd = std::clamp(rotStd, 0.01, kBigTheta);
-
     estStdDevs << xyStd, xyStd, rotStd;
     return estStdDevs;
   }
 
-  // Provided for callers that still use this naming.
+  // Legacy alias kept for callers that still use the old name.
   Eigen::Matrix<double, 3, 1> GetEstimationStdDevs(frc::Pose2d pose) {
     return ComputeAutoStdDevs(pose);
   }
@@ -109,13 +129,10 @@ class Vision {
 
  private:
   photon::PhotonPoseEstimator photonEstimator{
-      constants::Vision::kTagLayout,        // field layout
-      constants::Vision::kRobotToCam        // robot->camera transform
-  };                                        // [2](https://cummins365-my.sharepoint.com/personal/kb895_cummins_com/Documents/Microsoft%20Copilot%20Chat%20Files/Constants.h)
+      constants::Vision::kTagLayout,
+      constants::Vision::kRobotToCam};
 
-  photon::PhotonCamera camera{constants::Vision::kCameraName}; // must match PV name
-                                                               // [2](https://cummins365-my.sharepoint.com/personal/kb895_cummins_com/Documents/Microsoft%20Copilot%20Chat%20Files/Constants.h)
-  photon::PhotonPipelineResult m_latestResult{};
+  photon::PhotonCamera camera{constants::Vision::kCameraName};
+
   EstConsumer estConsumer;
-}
-;
+};

@@ -90,6 +90,8 @@ inline constexpr double kTiltThresholdDegrees = 15.0;
 inline constexpr double kTiltGainPerDeg  = 0.15;   // additional scale per degree beyond threshold
 inline constexpr double kTiltMaxScale    = 100.0;  // cap to keep estimator numerically stable
 
+inline constexpr units::millisecond_t msStaleCam = units::millisecond_t{250};
+
 }  // namespace Vision
 
 namespace Shooter {
