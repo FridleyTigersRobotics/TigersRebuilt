@@ -75,7 +75,7 @@ inline const frc::Transform3d kRobotToCam{
     frc::Rotation3d{
         0_rad,     // roll
         15_deg,    // pitch (DOWN is negative)
-        0_rad      // yaw   (LEFT is positive, RIGHT is negative)
+        units::radian_t{std::numbers::pi}      // yaw   (LEFT is positive, RIGHT is negative) 0_rad
     }
 };
 

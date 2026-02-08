@@ -25,6 +25,15 @@ class VisionPoseEstimator {
   static void SetVision(Vision* vision) { m_vision = vision; }  // single-drain via BeginFrame/PeekFrame
   static void SetNavX(studica::AHRS* navx) { m_navx = navx; }
 
+
+  // ---------------------- Pose conversion helper (usable from static methods) ----------
+  static inline frc::Pose3d Pose2dTo3d(const frc::Pose2d& p2d, units::meter_t z = 0_m) {
+    return frc::Pose3d{
+        frc::Translation3d{p2d.X(), p2d.Y(), z},
+        frc::Rotation3d{0_rad, 0_rad, p2d.Rotation().Radians()}};
+  }
+
+
   // ---------------------- Main API (call every loop from drivetrain) -------------------
   static frc::Pose2d GetEstimatedGlobalPose(
       const frc::Pose2d& currentPose,
@@ -55,8 +64,11 @@ class VisionPoseEstimator {
 
       if (pres && pres->HasTargets()) {
         auto& estimator = m_vision->GetEstimator();
-        auto visionEst  = estimator.EstimateCoprocMultiTagPose(*pres);
-        if (!visionEst) {
+        frc::Pose3d ref3d = Pose2dTo3d(currentPose);
+        estimator.SetReferencePose(ref3d);
+     // auto visionEst  = estimator.EstimateCoprocMultiTagPose(*pres); // This uses coprocessor pose (needs UI offset)
+        auto visionEst = estimator.EstimateLowestAmbiguityPose(*pres); // This uses kRobotToCam from code 
+     if (!visionEst) {
           visionEst = estimator.EstimateLowestAmbiguityPose(*pres);
         }
         if (visionEst) {
