@@ -74,8 +74,8 @@ inline const frc::Transform3d kRobotToCam{
     },
     frc::Rotation3d{
         0_rad,     // roll
-        15_deg,    // pitch (DOWN is negative)
-        units::radian_t{std::numbers::pi}      // yaw   (LEFT is positive, RIGHT is negative) 0_rad
+        30_deg,    // pitch (DOWN is negative)
+        0_rad      // yaw   (LEFT is positive, RIGHT is negative), 0_rad, units::radian_t{std::numbers::pi}
     }
 };
 
@@ -107,7 +107,7 @@ namespace Shooter {
 
   // ---- Closed-loop (Spark MAX velocity) ----
   // PID (duty-cycle based loop on controller; units scale with your velocity units)
-  inline constexpr double kPID_P  = 0.00010;   // start here for Vortex + 3x 4" Colsons, 1:1
+  inline constexpr double kPID_P  = 0.00010;   // Vortex + 3x 4" Colsons, 1:1
   inline constexpr double kPID_I  = 0.0;       // add later only if needed
   inline constexpr double kPID_D  = 0.00010;   // small damping to reduce overshoot
 
