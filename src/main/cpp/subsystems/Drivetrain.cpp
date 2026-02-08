@@ -119,39 +119,81 @@ void Drivetrain::DriveFromXbox(const frc::XboxController& controller,
 // Odometry / vision fusion
 // ---------------------------------------------------------------------------
 void Drivetrain::UpdateOdometry() {
+  // Update odometry from gyro + wheel module positions
   m_poseEstimator.Update(
       GetGyroRotation(),
       {m_frontLeft.GetPosition(), m_frontRight.GetPosition(),
        m_backLeft.GetPosition(),  m_backRight.GetPosition()});
 
-  // Get one candidate vision pose (may be odometry fallback if no new vision)
+  // Get one candidate vision pose (computed relative to a seen tag)
   const frc::Pose2d visionPose =
-      VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()); // single-drain happens inside 
+      VisionPoseEstimator::GetEstimatedGlobalPose(m_poseEstimator.GetEstimatedPosition()); // single-drain inside
   const units::second_t visionTimestamp = VisionPoseEstimator::GetLastTimestamp();
   const Eigen::Matrix<double, 3, 1> stdDevs = VisionPoseEstimator::GetLastStdDevs();
   const wpi::array<double, 3> visionStdDevArray{stdDevs(0), stdDevs(1), stdDevs(2)};
 
-  // Only fuse when the timestamp advanced (i.e., a new vision measurement arrived)
+  // Only act when a new vision measurement arrives
   static units::second_t lastUsedTs{0_s};
   const bool newVision = (visionTimestamp > lastUsedTs);
+
+  // --- Snap-or-Nudge thresholds (tune to taste) ---
+  constexpr double kSnapDistanceMeters = 1.0;   // snap if odometry and vision differ by >1.0 m
+  constexpr double kSnapAngleDeg       = 20.0;  // snap if heading differs by >20 deg
+  // Optional: XY-only snap (keep gyro heading) for first-bringup
+  constexpr bool   kXYOnlySnap         = false; // set true if you want to preserve yaw on snap
+
+  bool fusedThisLoop = false;
+
   if (newVision) {
-    m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
-    lastUsedTs = visionTimestamp;
+    const frc::Pose2d odomPose = m_poseEstimator.GetEstimatedPosition();
+    const double distDelta_m =
+        odomPose.Translation().Distance(visionPose.Translation()).to<double>();
+    const double headingDelta_deg =
+        (odomPose.Rotation() - visionPose.Rotation()).Degrees().to<double>();
+
+    DrivetrainNetTable->PutNumber("Vision_OdomDelta_m", distDelta_m);
+    DrivetrainNetTable->PutNumber("Vision_HeadingDelta_deg", headingDelta_deg);
+
+    const bool needSnap =
+        (distDelta_m > kSnapDistanceMeters) || (std::abs(headingDelta_deg) > kSnapAngleDeg);
+
+    if (needSnap) {
+      // ---- SNAP ----
+      if (kXYOnlySnap) {
+        // Keep current odometry/gyro heading; snap only X/Y
+        const frc::Pose2d xyOnlyVision{visionPose.Translation(), odomPose.Rotation()};
+        m_poseEstimator.ResetPose(xyOnlyVision);
+      } else {
+        // Full pose snap (XY + heading) to the vision-derived pose
+        m_poseEstimator.ResetPose(visionPose);
+      }
+      lastUsedTs = visionTimestamp;
+      DrivetrainNetTable->PutBoolean("VisionSnapApplied", true);
+      fusedThisLoop = true;
+    } else {
+      // ---- NUDGE ----
+      m_poseEstimator.AddVisionMeasurement(visionPose, visionTimestamp, visionStdDevArray);
+      lastUsedTs = visionTimestamp;
+      DrivetrainNetTable->PutBoolean("VisionSnapApplied", false);
+      fusedThisLoop = true;
+    }
+  } else {
+    DrivetrainNetTable->PutBoolean("VisionSnapApplied", false);
   }
 
-  // Optional telemetry: reuse the same pose we already pulled this loop
-  DrivetrainNetTable->PutNumber("Vision X",       visionPose.X().to<double>());
-  DrivetrainNetTable->PutNumber("Vision Y",       visionPose.Y().to<double>());
+  // Telemetry: vision pose (re-using the same pose we already pulled this loop)
+  DrivetrainNetTable->PutNumber("Vision X", visionPose.X().to<double>());
+  DrivetrainNetTable->PutNumber("Vision Y", visionPose.Y().to<double>());
   DrivetrainNetTable->PutNumber("Vision Heading", visionPose.Rotation().Degrees().to<double>());
+  DrivetrainNetTable->PutBoolean("VisionFusedThisLoop", fusedThisLoop);
 
-  // Optional: expose whether fusion happened this loop
-  DrivetrainNetTable->PutBoolean("VisionFusedThisLoop", newVision);
-
+  // Extra gyro telemetry (from your existing code)
   DrivetrainNetTable->PutNumber("navX Yaw (deg)", m_gyro.GetYaw());
   frc::Rotation2d rotationvalue = GetGyroRotation();
   double rotationdegrees = rotationvalue.Degrees().value();
   DrivetrainNetTable->PutNumber("Gyro Angle (deg, continuous)", rotationdegrees);
 
+  // Keep the Field2D widget updated
   m_field.SetRobotPose(Drivetrain::getPose());
 }
 
