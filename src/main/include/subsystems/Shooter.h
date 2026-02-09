@@ -10,10 +10,11 @@
 #include <networktables/NetworkTableInstance.h>
 
 #include "Constants.h"
+#include "Drivetrain.h"
 
 class Shooter : public frc2::SubsystemBase {
  public:
-  Shooter();
+  Shooter(Drivetrain& driveidentity);
 
   // ---- Closed-loop RPM control ----
   frc2::CommandPtr SetRPMCommand(double rpm);
@@ -22,13 +23,18 @@ class Shooter : public frc2::SubsystemBase {
   frc2::CommandPtr StopCommand();      // stops the controller & motor
   void Stop();
 
+  // shot calculation and set speed
+  frc2::CommandPtr CalcAndSetShotCmd();
+
   // Helpers
   bool AtSpeed(double tolRpm = 100.0) const;
+  units::meter_t MetersToTarget(frc::Translation2d& targetXY);
 
   void UpdateNetTable();
   void Periodic() override;
 
  private:
+  Drivetrain& m_drive;
   // SparkMax + NEO (CAN)
   rev::spark::SparkMax m_shooterMotor{
       constants::Shooter::kShooterCanId,

@@ -2,6 +2,7 @@
 #include "subsystems/Shooter.h"
 
 #include <rev/config/SparkMaxConfig.h>
+#include <frc/DriverStation.h>
 
 using constants::Shooter::kInvertMotor;
 using constants::Shooter::kOpenLoopRampSeconds;
@@ -15,7 +16,7 @@ using constants::Shooter::kFF_kS;
 using constants::Shooter::kFF_kV;
 // using constants::Shooter::kFF_kA;  // Uncomment if you decide to use kA
 
-Shooter::Shooter() {
+Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
   // ---- ensure stopped on startup ----
   m_targetRPM.reset();             // no setpoint active
   m_shooterMotor.Set(0.0);         // force output = 0 now (before Configure)
@@ -149,4 +150,32 @@ void Shooter::UpdateNetTable() {
   ShooterNetTable->PutNumber("StickyFaultsRaw", stickyFaults.rawBits);
   ShooterNetTable->PutBoolean("Fault_Sensor", faults.sensor);
   ShooterNetTable->PutBoolean("Fault_Temp", faults.temperature);
+}
+
+units::meter_t Shooter::MetersToTarget (frc::Translation2d& targetXY){
+  const frc::Pose2d robotPose = m_drive.getPose();
+  const units::meter_t dist = robotPose.Translation().Distance(targetXY);
+  return dist;  // return meters as double
+
+}
+
+frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
+  return frc2::cmd::RunEnd(
+        // run: updates each scheduler loop (~20ms by default)
+        [this] {
+          frc::Translation2d allianceHubCoords;
+          const auto alliance = frc::DriverStation::GetAlliance();
+          if (alliance && alliance.value() == frc::DriverStation::Alliance::kRed) {
+            allianceHubCoords = constants::Field::kRedHubCoord;
+          } else {
+            allianceHubCoords = constants::Field::kBlueHubCoord;
+          }
+          const units::meter_t shotdist = MetersToTarget(allianceHubCoords);
+          const double rpm = {0.0}; //m_distToRpm(shotdist); calculation here
+          this->SetTargetRPM(rpm);
+        },
+        // end: ensure shooter is safe when command ends or is interrupted
+        [this] { this->Stop(); },
+        {this}
+    );
 }

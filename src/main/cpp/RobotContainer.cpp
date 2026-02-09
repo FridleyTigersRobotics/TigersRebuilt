@@ -23,7 +23,7 @@ using namespace units::literals;
 #include "commands/Autos.h"
 #include "commands/ExampleCommand.h"
 
-RobotContainer::RobotContainer() : m_drivetrain() {
+RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain) {
   // NOTE: Drivetrain owns navX now; do not set it here
   // VisionPoseEstimator::SetNavX(&m_navx);  // (removed)
 
@@ -37,9 +37,15 @@ RobotContainer::RobotContainer() : m_drivetrain() {
           [this] {
             m_drivetrain.DriveFromXbox(m_driverController.GetHID(),
                                        /*fieldRelative=*/true,
-                                       20_ms);
+                                       constants::RobotConst::kSchedulerTiming);
           },
           {&m_drivetrain}));
+
+  // Default shooter to stop spinning using its own command
+  m_shooter.SetDefaultCommand(
+      m_shooter.StopCommand()
+  );
+
 }
 
 void RobotContainer::ConfigureBindings() {
@@ -64,16 +70,20 @@ void RobotContainer::ConfigureBindings() {
         //m_driverController.GetHID().SetRumble(frc::GenericHID::RumbleType::kBothRumble, 1.0);
       }, {&m_drivetrain}).ToPtr());
 
-  //run shooter
-  m_driverController.A().OnTrue(m_shooter.SetRPMCommand(5000.0));
-  m_driverController.A().OnFalse(m_shooter.StopCommand());
+  //run shooter, simple given speed to test
+  m_driverController.A().WhileTrue(m_shooter.SetRPMCommand(5000.0));
 
+  //calculate shot and spin up shooter
+  m_driverController.RightBumper().WhileTrue(
+    m_shooter.CalcAndSetShotCmd()
+  );
   
+  //aim robot at alliance Hub
   m_driverController.RightStick().WhileTrue(
       m_drivetrain.cmdAimAtHub(
         m_driverController.GetHID(),   // passes a const frc::XboxController& (non-copy)
         /*fieldRelative=*/true,
-        20_ms)
+        constants::RobotConst::kSchedulerTiming)
     );
 
 

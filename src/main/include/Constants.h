@@ -146,4 +146,8 @@ namespace Driver {
     inline constexpr double kAutokDr = 0.0;
 } // namespace Driver
 
+namespace RobotConst {
+    inline constexpr units::millisecond_t kSchedulerTiming = units::millisecond_t{20}; //20_ms
+}// namespace RobotConst
+
 }  // namespace constants
