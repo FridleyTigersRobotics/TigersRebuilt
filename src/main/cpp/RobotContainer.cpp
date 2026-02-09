@@ -68,6 +68,15 @@ void RobotContainer::ConfigureBindings() {
   m_driverController.A().OnTrue(m_shooter.SetRPMCommand(5000.0));
   m_driverController.A().OnFalse(m_shooter.StopCommand());
 
+  
+  m_driverController.RightStick().WhileTrue(
+      m_drivetrain.cmdAimAtHub(
+        m_driverController.GetHID(),   // passes a const frc::XboxController& (non-copy)
+        /*fieldRelative=*/true,
+        20_ms)
+    );
+
+
 
 }
 

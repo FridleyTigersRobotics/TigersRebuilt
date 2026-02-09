@@ -92,6 +92,9 @@ inline constexpr double kTiltMaxScale    = 100.0;  // cap to keep estimator nume
 
 inline constexpr units::millisecond_t msStaleCam = units::millisecond_t{250};
 
+inline constexpr double kSnapDistanceMeters = 1.0;   // snap if odometry and vision differ by >1.0 m
+inline constexpr double kSnapAngleDeg       = 20.0;  // snap if heading differs by >20 deg
+
 }  // namespace Vision
 
 namespace Shooter {
@@ -120,5 +123,27 @@ namespace Shooter {
   inline constexpr double kFF_kA  = 0.00010;   // small; tune only if you observe accel error
 }  // namespace Shooter
 
+namespace Field {
+    inline constexpr units::meter_t kBlueHubX{4.03};
+    inline constexpr units::meter_t kBlueHubY{4.035};
+    inline constexpr units::meter_t kRedHubX {12.51};
+    inline constexpr units::meter_t kRedHubY {4.035};
+    inline constexpr frc::Translation2d kRedHubCoord{kRedHubX, kRedHubY};
+    inline constexpr frc::Translation2d kBlueHubCoord{kBlueHubX, kBlueHubY};
+}  // namespace Field
+
+namespace Driver {
+    inline constexpr double kDefaultDeadband = 0.05;
+    inline constexpr double kAimkP = 5.0; //6.0
+    inline constexpr double kAimkI = 0.0; //0.8
+    inline constexpr double kAimkD = 0.0; //0.06
+    inline constexpr units::radian_t kAimTol = units::radian_t{2_deg}; // aiming tolerance ~2 degrees
+    inline constexpr double kAutokPt = 5.0; // translation
+    inline constexpr double kAutokIt = 0.0;
+    inline constexpr double kAutokDt = 0.0;
+    inline constexpr double kAutokPr = 5.0; // rotation
+    inline constexpr double kAutokIr = 0.0;
+    inline constexpr double kAutokDr = 0.0;
+} // namespace Driver
 
 }  // namespace constants

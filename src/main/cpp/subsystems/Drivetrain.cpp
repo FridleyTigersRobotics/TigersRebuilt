@@ -11,6 +11,9 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/DriverStation.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc/DriverStation.h>
+#include <numbers>  // for std::numbers::pi
+
 
 #include "subsystems/VisionPoseEstimator.h"
 
@@ -51,6 +54,12 @@ Drivetrain::Drivetrain()
 
   ConfigureAutoBuilder();
   frc::SmartDashboard::PutData("Field",&m_field);
+
+  // Angle is in radians; enable continuous input so error wraps on (-pi, pi]
+  m_aimPID.EnableContinuousInput(-std::numbers::pi, std::numbers::pi);
+
+  // Optional: set a small tolerance so AtSetpoint() goes true when close
+  m_aimPID.SetTolerance(constants::Driver::kAimTol.value());
 }
 
 void Drivetrain::Periodic() {
@@ -115,6 +124,93 @@ void Drivetrain::DriveFromXbox(const frc::XboxController& controller,
   Drive(xSpeed, ySpeed, rotRate, fieldRelative, period);
 }
 
+void Drivetrain::DriveFromXboxAim(const frc::XboxController& controller,
+                                  bool fieldRelative,
+                                  units::second_t period,
+                                  double deadband,
+                                  const frc::Translation2d& targetXY) {
+  // ----------------- Translation from left stick (unchanged) -----------------
+  // WPILib Y is inverted; invert so up is +forward
+  const double rawX = -controller.GetLeftY();
+  const double rawY = -controller.GetLeftX();
+
+  const double shapedX = ShapeInput(rawX, deadband);
+  const double shapedY = ShapeInput(rawY, deadband);
+
+  // 2026 SlewRateLimiter takes/returns units::scalar_t
+  const auto limitedX_u = m_xLimiter.Calculate(units::scalar_t{shapedX});
+  const auto limitedY_u = m_yLimiter.Calculate(units::scalar_t{shapedY});
+
+  const auto xSpeed = limitedX_u.value() * kMaxSpeed; // m/s
+  const auto ySpeed = limitedY_u.value() * kMaxSpeed; // m/s
+
+  // ----------------- Rotation: face the target coordinate (PID) -------------
+  const frc::Pose2d pose = getPose();                 // field pose
+  const frc::Translation2d delta = targetXY - pose.Translation();
+
+  const frc::Rotation2d targetHeading  = delta.Angle();
+  const frc::Rotation2d currentHeading = pose.Rotation();
+
+  // Optional guard: don't spin if we are effectively at the target point
+  const bool nearTargetXY = delta.Norm().to<double>() < 0.05; // 5 cm
+
+  // (Optional) manual override on right-stick X — uncomment if desired
+  // constexpr double kManualOverrideThresh = 0.15;
+  // const double rightX = controller.GetRightX();
+  // const bool manualOverride = std::abs(rightX) > kManualOverrideThresh;
+
+  double targetOmega = 0.0; // rad/s
+
+  if (!nearTargetXY /* && !manualOverride */) {
+    // PID Calculate(measurement, setpoint) — both in radians
+    const double measurement = currentHeading.Radians().value();
+    const double setpoint    = targetHeading.Radians().value();
+
+    // If you want to reset I/D when re-entering auto-aim after manual override, call:
+    // if (manualOverrideLastLoop && !manualOverride) m_aimPID.Reset();
+
+    double pidOut = m_aimPID.Calculate(measurement, setpoint); // rad/s
+
+    // Clamp to your configured max angular speed
+    pidOut = std::clamp(pidOut, -kMaxAngularSpeed.value(), +kMaxAngularSpeed.value());
+
+    targetOmega = pidOut;
+  } else {
+    // When at the target (or on top of it), hold still and clear I-term
+    m_aimPID.Reset();
+    targetOmega = 0.0;
+  }
+
+  // Apply your rotational slew-rate limiter (normalize -> limit -> denormalize)
+  const double targetOmegaNorm = targetOmega / kMaxAngularSpeed.value();
+  const auto limitedOmegaNorm_u = m_rotLimiter.Calculate(units::scalar_t{targetOmegaNorm});
+  const double limitedOmega = limitedOmegaNorm_u.value() * kMaxAngularSpeed.value();
+  const auto rotRate = units::radians_per_second_t{limitedOmega};
+
+  // ----------------- Drive -----------------
+  Drive(xSpeed, ySpeed, rotRate, fieldRelative, period);
+}
+
+frc2::CommandPtr Drivetrain::cmdAimAtHub(const frc::XboxController& controller,
+                                         bool fieldRelative,
+                                         units::second_t period,
+                                         double deadband) {
+  // Capture by VALUE so args are stable inside the command; 'this' is the requirement owner.
+  return frc2::cmd::Run(
+    [this, &controller, fieldRelative, period, deadband] {
+      frc::Translation2d allianceHubCoords;
+      const auto alliance = frc::DriverStation::GetAlliance();
+      if (alliance && alliance.value() == frc::DriverStation::Alliance::kRed) {
+        allianceHubCoords = constants::Field::kRedHubCoord;
+      } else {
+        allianceHubCoords = constants::Field::kBlueHubCoord;
+      }
+      DriveFromXboxAim(controller, fieldRelative, period, deadband, allianceHubCoords);
+    },
+    {this}  // require Drivetrain so default command pauses while this runs
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Odometry / vision fusion
 // ---------------------------------------------------------------------------
@@ -137,8 +233,9 @@ void Drivetrain::UpdateOdometry() {
   const bool newVision = (visionTimestamp > lastUsedTs);
 
   // --- Snap-or-Nudge thresholds (tune to taste) ---
-  constexpr double kSnapDistanceMeters = 1.0;   // snap if odometry and vision differ by >1.0 m
-  constexpr double kSnapAngleDeg       = 20.0;  // snap if heading differs by >20 deg
+  constexpr double kSnapDistanceMeters = constants::Vision::kSnapDistanceMeters;
+  constexpr double kSnapAngleDeg = constants::Vision::kSnapAngleDeg;
+
   // Optional: XY-only snap (keep gyro heading) for first-bringup
   constexpr bool   kXYOnlySnap         = false; // set true if you want to preserve yaw on snap
 
@@ -241,8 +338,8 @@ void Drivetrain::ConfigureAutoBuilder(){
       [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
       [this](auto speeds, auto feedforwards){ Drive(speeds.vx, speeds.vy, speeds.omega, false, units::millisecond_t{20}); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
       std::make_shared<PPHolonomicDriveController>( // PPHolonomicController is the built in path following controller for holonomic drive trains
-          PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-          PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+          PIDConstants(constants::Driver::kAutokPt, constants::Driver::kAutokIt, constants::Driver::kAutokDt), // Translation PID constants
+          PIDConstants(constants::Driver::kAutokPr, constants::Driver::kAutokIr, constants::Driver::kAutokDr) // Rotation PID constants
       ),
       config, // The robot configuration
       []() {

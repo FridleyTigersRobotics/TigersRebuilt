@@ -17,6 +17,7 @@
 #include <frc/XboxController.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
+#include <frc/controller/PIDController.h>
 
 // Units headers
 #include <units/angle.h>
@@ -26,6 +27,7 @@
 
 #include "SwerveModule.h"
 #include "Vision.h"
+#include "Constants.h"
 
 namespace DriveIds {
 constexpr int kFL_Drive = 4;
@@ -76,7 +78,18 @@ class Drivetrain : public frc2::SubsystemBase {
   void DriveFromXbox(const frc::XboxController& controller,
                      bool fieldRelative,
                      units::second_t period,
-                     double deadband = 0.05);
+                     double deadband = constants::Driver::kDefaultDeadband);
+
+  void DriveFromXboxAim(const frc::XboxController& controller,
+                     bool fieldRelative,
+                     units::second_t period,
+                     double deadband = constants::Driver::kDefaultDeadband,
+                     const frc::Translation2d& targetXY = frc::Translation2d{});
+  
+  frc2::CommandPtr cmdAimAtHub(const frc::XboxController& controller,
+                     bool fieldRelative,
+                     units::second_t period,
+                     double deadband = constants::Driver::kDefaultDeadband);
 
   void UpdateOdometry();
 
@@ -145,4 +158,6 @@ class Drivetrain : public frc2::SubsystemBase {
   static double ShapeInput(double v, double deadband);
   frc::Rotation2d GetGyroRotation();  // non-const (AHRS getters are non-const)
   frc::Field2d m_field;
+
+  frc::PIDController m_aimPID{constants::Driver::kAimkP, constants::Driver::kAimkI, constants::Driver::kAimkD};
 };
