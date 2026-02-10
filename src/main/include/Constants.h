@@ -124,10 +124,10 @@ namespace Shooter {
 }  // namespace Shooter
 
 namespace Field {
-    inline constexpr units::meter_t kBlueHubX{4.03};
-    inline constexpr units::meter_t kBlueHubY{4.035};
-    inline constexpr units::meter_t kRedHubX {12.51};
-    inline constexpr units::meter_t kRedHubY {4.035};
+    inline constexpr units::meter_t kBlueHubX{4.6256};
+    inline constexpr units::meter_t kBlueHubY{4.0346};
+    inline constexpr units::meter_t kRedHubX {11.9154};
+    inline constexpr units::meter_t kRedHubY {4.0346};
     inline constexpr frc::Translation2d kRedHubCoord{kRedHubX, kRedHubY};
     inline constexpr frc::Translation2d kBlueHubCoord{kBlueHubX, kBlueHubY};
 }  // namespace Field
