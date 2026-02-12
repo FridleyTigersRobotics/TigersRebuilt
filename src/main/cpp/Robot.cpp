@@ -5,8 +5,12 @@
 #include "Robot.h"
 
 #include <frc2/command/CommandScheduler.h>
+#include <frc/Filesystem.h>
+#include <wpinet/WebServer.h>
 
-Robot::Robot() {}
+Robot::Robot() {
+  wpi::WebServer::GetInstance().Start(5800, frc::filesystem::GetDeployDirectory());
+}
 
 /**
  * This function is called every 20 ms, no matter the mode. Use
