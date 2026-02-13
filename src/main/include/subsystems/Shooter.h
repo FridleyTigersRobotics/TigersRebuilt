@@ -8,6 +8,7 @@
 #include <rev/SparkMax.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
+#include <frc/DigitalInput.h> 
 
 #include "Constants.h"
 #include "Drivetrain.h"
@@ -22,6 +23,9 @@ class Shooter : public frc2::SubsystemBase {
 
   frc2::CommandPtr StopCommand();      // stops the controller & motor
   void Stop();
+
+  frc2::CommandPtr SetHoodDegCommand(double deg);
+  void SetHoodDeg(double deg);
 
   // shot calculation and set speed
   frc2::CommandPtr CalcAndSetShotCmd();
@@ -59,4 +63,16 @@ class Shooter : public frc2::SubsystemBase {
 
   std::shared_ptr<nt::NetworkTable> ShooterNetTable =
       nt::NetworkTableInstance::GetDefault().GetTable("2227/Shooter");
+
+  // Simple state for homing
+  enum class HoodState { kIdle, kHoming, kHomed };
+
+  frc::DigitalInput gHoodLimit{constants::Shooter::kHoodDio};
+  HoodState         gHoodState      = HoodState::kIdle;  // start idle at boot
+  double            gHoodLastCmdDeg = 0.0;                 // target degrees after homing
+  
+  // Pending hood target (degrees) that was requested while un-homed.
+  // When the homing transition completes, Periodic() will apply this and clear it.
+  std::optional<double> m_hoodPendingDeg;
+
 };

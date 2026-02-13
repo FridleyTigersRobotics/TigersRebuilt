@@ -123,6 +123,23 @@ namespace Shooter {
 
   // Optional: if you plan to use acceleration feedforward
   inline constexpr double kFF_kA  = 0.00010;   // small; tune only if you observe accel error
+
+  //Hood Constants
+  inline constexpr int    kHoodDio               = 0;       // DIO channel for hood homing switch
+  inline constexpr bool   kHoodActiveLow         = true;    // true if pressed pulls DIO low
+  inline constexpr double kHoodDegPerMotorRot    = 3.6;     // 360.0 / gearRatio_to_hood
+  // Spark on-device PID for hood position (units are degrees due to conversion factor)
+  inline constexpr double kHood_kP               = 0.12;
+  inline constexpr double kHood_kI               = 0.0;
+  inline constexpr double kHood_kD               = 0.0;
+  // Limit output of the Spark’s position loop
+  inline constexpr double kHoodOutMin            = -1.0;
+  inline constexpr double kHoodOutMax            =  1.0;
+  // Homing duty toward the switch while disabled CL
+  inline constexpr double kHoodHomeDuty          = -0.15;   // sign to drive toward switch
+  inline constexpr units::second_t kHomingTimeout = units::second_t{5.0};
+
+
 }  // namespace Shooter
 
 namespace Field {
