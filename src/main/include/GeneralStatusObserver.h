@@ -18,6 +18,7 @@ class GeneralStatusObserver {
  public:
     GeneralStatusObserver();
     void UpdateNetTable();
+    void UpdateHubStatus();
 
  private:
     frc::PowerDistribution ZipZap{1, frc::PowerDistribution::ModuleType::kRev};
