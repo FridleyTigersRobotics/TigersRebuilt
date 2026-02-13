@@ -134,9 +134,9 @@ namespace Field {
 
 namespace Driver {
     inline constexpr double kDefaultDeadband = 0.05;
-    inline constexpr double kAimkP = 5.0; //6.0
-    inline constexpr double kAimkI = 0.0; //0.8
-    inline constexpr double kAimkD = 0.0; //0.06
+    inline constexpr double kAimkP = 12.0; //6.0
+    inline constexpr double kAimkI = 0.8; //0.8
+    inline constexpr double kAimkD = 0.06; //0.06
     inline constexpr units::radian_t kAimTol = units::radian_t{2_deg}; // aiming tolerance ~2 degrees
     inline constexpr double kAutokPt = 5.0; // translation
     inline constexpr double kAutokIt = 0.0;

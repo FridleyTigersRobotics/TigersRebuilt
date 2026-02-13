@@ -41,6 +41,7 @@ SwerveModule::SwerveModule(const int driveMotorCanId,
   m_driveMotor.Configure(driveCfg,
                          rev::ResetMode::kResetSafeParameters,
                          rev::PersistMode::kPersistParameters);
+  m_driveMotor.ClearFaults();
   m_driveEncoder.SetPosition(0.0);
 
   // ---- SparkMax (turn) config ----
@@ -53,6 +54,7 @@ SwerveModule::SwerveModule(const int driveMotorCanId,
   m_turningMotor.Configure(turnCfg,
                            rev::ResetMode::kResetSafeParameters,
                            rev::PersistMode::kPersistParameters);
+  m_turningMotor.ClearFaults();
 
   // ---- CANcoder configuration (Phoenix 6) ----
   // Apply magnet offset in *turns*; normalize to [0, 2π) when reading.
