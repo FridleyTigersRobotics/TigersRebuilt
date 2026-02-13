@@ -101,12 +101,14 @@ namespace Shooter {
   // motor Can ID
   inline constexpr int kShooterCanId = 21;
   inline constexpr int kShooterFolllowerCanId = 22;
+  inline constexpr int kHoodMotorCanId = 23;
 
   // Electrical & safety (unchanged if you already set these)
   inline constexpr bool   kInvertMotor            = false;
   inline constexpr int    kSmartCurrentLimit      = 40;     // A
   inline constexpr double kVoltageCompSaturation  = 12.0;   // V
   inline constexpr double kOpenLoopRampSeconds    = 0.20;   // s
+  inline constexpr int    kSmartCurrentLimit550   = 10;
 
   // ---- Closed-loop (Spark MAX velocity) ----
   // PID (duty-cycle based loop on controller; units scale with your velocity units)

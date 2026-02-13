@@ -10,6 +10,7 @@ using constants::Shooter::kPID_D;
 using constants::Shooter::kPID_I;
 using constants::Shooter::kPID_P;
 using constants::Shooter::kSmartCurrentLimit;
+using constants::Shooter::kSmartCurrentLimit550;
 using constants::Shooter::kVoltageCompSaturation;
 // Feedforward (recommended for NEO Vortex direct-drive)
 using constants::Shooter::kFF_kS;
@@ -81,6 +82,22 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
   m_shooterMotorFollower.ClearFaults();
 }
 
+// ---------- hood motor setup----------
+{
+  rev::spark::SparkMaxConfig hcfg;
+  
+  hcfg.SmartCurrentLimit(kSmartCurrentLimit550);
+  hcfg.VoltageCompensation(kVoltageCompSaturation);
+  hcfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kBrake);
+
+  m_hoodMotor.Configure(
+      hcfg,
+      rev::ResetMode::kResetSafeParameters,
+      rev::PersistMode::kPersistParameters);
+
+  // Optional: clear sticky faults
+  m_hoodMotor.ClearFaults();
+}
 
   UpdateNetTable();
 }
