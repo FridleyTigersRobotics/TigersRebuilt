@@ -12,7 +12,7 @@ using constants::Shooter::kPID_I;
 using constants::Shooter::kPID_P;
 using constants::Shooter::kSmartCurrentLimit;
 using constants::Shooter::kSmartCurrentLimit550;
-using constants::Shooter::kVoltageCompSaturation;
+using constants::Shooter::kVoltageCompensation;
 // Feedforward (recommended for NEO Vortex direct-drive)
 using constants::Shooter::kFF_kS;
 using constants::Shooter::kFF_kV;
@@ -38,7 +38,7 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
     rev::spark::SparkMaxConfig cfg;
     cfg.Inverted(kInvertMotor);
     cfg.SmartCurrentLimit(kSmartCurrentLimit);
-    cfg.VoltageCompensation(kVoltageCompSaturation);
+    cfg.VoltageCompensation(kVoltageCompensation);
     cfg.OpenLoopRampRate(kOpenLoopRampSeconds);
     cfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kCoast);
 
@@ -57,7 +57,7 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
     rev::spark::SparkMaxConfig fcfg;
     fcfg.Follow(m_shooterMotor, /*invert=*/true);
     fcfg.SmartCurrentLimit(kSmartCurrentLimit);
-    fcfg.VoltageCompensation(kVoltageCompSaturation);
+    fcfg.VoltageCompensation(kVoltageCompensation);
     fcfg.OpenLoopRampRate(kOpenLoopRampSeconds);
     fcfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kCoast);
 
@@ -71,7 +71,7 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
   {
     rev::spark::SparkMaxConfig hcfg;
     hcfg.SmartCurrentLimit(kSmartCurrentLimit550);
-    hcfg.VoltageCompensation(kVoltageCompSaturation);
+    hcfg.VoltageCompensation(kVoltageCompensation);
     hcfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kBrake);
 
     // 1) Report encoder in *degrees at hood* so Spark position setpoints use degrees

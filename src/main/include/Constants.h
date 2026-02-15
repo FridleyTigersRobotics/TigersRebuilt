@@ -106,7 +106,7 @@ namespace Shooter {
   // Electrical & safety (unchanged if you already set these)
   inline constexpr bool   kInvertMotor            = false;
   inline constexpr int    kSmartCurrentLimit      = 40;     // A
-  inline constexpr double kVoltageCompSaturation  = 12.0;   // V
+  inline constexpr double kVoltageCompensation  = 12.0;   // V
   inline constexpr double kOpenLoopRampSeconds    = 0.20;   // s
   inline constexpr int    kSmartCurrentLimit550   = 10;
 
@@ -164,6 +164,48 @@ namespace Driver {
     inline constexpr double kAutokIr = 0.0;
     inline constexpr double kAutokDr = 0.0;
 } // namespace Driver
+
+namespace Elevator {
+    inline constexpr int kLeadLeftCanId = 24;
+    inline constexpr int kLeadRightCanId = 25;
+    inline constexpr int kLeftBottomDio  = 1;
+    inline constexpr int kRightBottomDio = 2;
+
+    // Geometry
+    inline constexpr double kLeadMetersPerRev = 0.002; // TR12x2 lead (2 mm/rev)
+
+    // Range & tolerances
+    inline constexpr units::meter_t kMinHeight = 0.00_m;
+    inline constexpr units::meter_t kMaxHeight = 0.20_m;
+    inline constexpr units::meter_t kTolerance = 0.003_m; // ±3 mm
+
+    // REV PID
+    inline constexpr double kP = 1.0;
+    inline constexpr double kI = 0.0;
+    inline constexpr double kD = 0.0;
+    inline constexpr double kFF = 0.0;
+
+    // Limits
+    inline constexpr int kSmartCurrentLimit = 30;
+    inline constexpr bool kInvertMotor = false;
+    inline constexpr double kVoltageCompensation = 12.0;
+
+    // Homing
+    inline constexpr double kHomeSpeedPct = -0.10; // negative = down
+    inline constexpr units::second_t kHomeTimeout = 5_s;
+
+    // Sync / skew
+    inline constexpr double kSyncGainRotPerRot = 0.10;
+    inline constexpr double kSyncMaxCorrRot    = 0.25;
+
+    // Fault when skew exceeds this
+    inline constexpr units::meter_t kSkewFault    = 0.015_m;  // 15 mm
+
+    // Deadband: ignore tiny skew so we don't chatter the cross-coupled correction.
+    // Start at ~10–20% of kSkewFault (1.5–3.0 mm here) and tune on-robot.
+    inline constexpr units::meter_t kSkewDeadband = 0.002_m;  // 2 mm to start
+
+} // namespace Elevator
 
 namespace RobotConst {
     inline constexpr units::millisecond_t kSchedulerTiming = units::millisecond_t{20}; //20_ms
