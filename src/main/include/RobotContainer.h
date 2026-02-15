@@ -15,6 +15,7 @@
 #include "subsystems/ExampleSubsystem.h"
 #include "subsystems/Drivetrain.h"
 #include "subsystems/Shooter.h"
+#include "subsystems/Elevator.h"
 #include "Vision.h"
 
 /**
@@ -35,10 +36,13 @@ class RobotContainer {
   frc2::CommandXboxController m_driverController{
       constants::OperatorConstants::kDriverControllerPort};
 
+  frc2::CommandGenericHID m_buttons {constants::OperatorConstants::kButtonsPort};
+
   // Subsystems
   ExampleSubsystem m_subsystem;
   Drivetrain m_drivetrain;
   Shooter m_shooter;
+  Elevator m_elevator;
 
   // Vision: pass a no-op callback matching Vision's expected signature
   //   (frc::Pose2d, units::second_t, Eigen::Matrix<double,3,1>)

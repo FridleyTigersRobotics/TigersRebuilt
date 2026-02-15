@@ -23,7 +23,7 @@ using namespace units::literals;
 #include "commands/Autos.h"
 #include "commands/ExampleCommand.h"
 
-RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain) {
+RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_elevator() {
   // NOTE: Drivetrain owns navX now; do not set it here
   // VisionPoseEstimator::SetNavX(&m_navx);  // (removed)
 
@@ -86,7 +86,8 @@ void RobotContainer::ConfigureBindings() {
         constants::RobotConst::kSchedulerTiming)
     );
 
-
+  //Start Homing
+  m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
 
 }
 
