@@ -168,6 +168,31 @@ frc2::CommandPtr Elevator::SetHeightCmd(units::meter_t targetHeight) {
          ).WithName("ElevatorSetHeight");
 }
 
+frc2::CommandPtr Elevator::SpinDownTestCmd(double pct, units::second_t time) {
+  const double kSafePct = std::clamp(std::abs(pct), 0.0, 1.0);
+  return frc2::cmd::StartEnd(
+    [this, kSafePct] {
+      // If negative is "down" on your robot, use -kSafePct; flip sign if needed.
+      m_left.Set(-kSafePct);
+      m_right.Set(-kSafePct);
+    },
+    [this] { Stop(); },
+    {this}
+  ).WithTimeout(time).WithName("ElevatorSpinDownTest");
+}
+
+frc2::CommandPtr Elevator::SpinUpTestCmd(double pct, units::second_t time) {
+  const double kSafePct = std::clamp(std::abs(pct), 0.0, 1.0);
+  return frc2::cmd::StartEnd(
+    [this, kSafePct] {
+      m_left.Set(+kSafePct);
+      m_right.Set(+kSafePct);
+    },
+    [this] { Stop(); },
+    {this}
+  ).WithTimeout(time).WithName("ElevatorSpinUpTest");
+}
+
 void Elevator::Periodic() {
   // ----- HOMING -----
   if (m_homing) {

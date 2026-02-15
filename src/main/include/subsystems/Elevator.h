@@ -30,6 +30,8 @@ class Elevator : public frc2::SubsystemBase {
   // Commands
   frc2::CommandPtr HomeCmd();                            // homing only
   frc2::CommandPtr SetHeightCmd(units::meter_t target);  // auto-home then mov
+  frc2::CommandPtr SpinDownTestCmd(double pct, units::second_t time);
+  frc2::CommandPtr SpinUpTestCmd(double pct, units::second_t time);
 
 
   void Periodic() override;

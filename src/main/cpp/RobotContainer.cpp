@@ -86,8 +86,9 @@ void RobotContainer::ConfigureBindings() {
         constants::RobotConst::kSchedulerTiming)
     );
 
-  //Start Homing
-  m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
+  //test elevator
+  m_buttons.Button(1).OnTrue(m_elevator.SpinDownTestCmd(0.1,units::time::second_t {2.0}));
+  m_buttons.Button(2).OnTrue(m_elevator.SpinUpTestCmd(0.1,units::time::second_t {2.0}));
 
 }
 
