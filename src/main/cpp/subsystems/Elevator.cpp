@@ -122,10 +122,10 @@ void Elevator::ApplyPositionReferences() {
   // Skew fault (units-aware abs)
   if (skew_m > c::kSkewFault) {
     Stop();
-    ElevatorNetTable->PutBoolean("Elevator/SkewFault", true);
+    ElevatorNetTable->PutBoolean("SkewFault", true);
     return;
   } else {
-    ElevatorNetTable->PutBoolean("Elevator/SkewFault", false);
+    ElevatorNetTable->PutBoolean("SkewFault", false);
   }
 
   // Issue position setpoints using 2026 API: SetSetpoint(..., ControlType::kPosition)
@@ -175,11 +175,11 @@ void Elevator::Periodic() {
     if (elapsed > c::kHomeTimeout) {
       Stop();
       m_homing = false;
-      ElevatorNetTable->PutBoolean("Elevator/HomeTimeout", true);
+      ElevatorNetTable->PutBoolean("HomeTimeout", true);
       UpdateNetTable();
       return;
     } else {
-      ElevatorNetTable->PutBoolean("Elevator/HomeTimeout", false);
+      ElevatorNetTable->PutBoolean("HomeTimeout", false);
     }
 
     // Left side homing
@@ -226,19 +226,19 @@ void Elevator::Periodic() {
 }
 
 void Elevator::UpdateNetTable() const {
-  ElevatorNetTable->PutBoolean("Elevator/LeftHomed",  m_leftHomed);
-  ElevatorNetTable->PutBoolean("Elevator/RightHomed", m_rightHomed);
-  ElevatorNetTable->PutBoolean("Elevator/Homing",     m_homing);
-  ElevatorNetTable->PutNumber ("Elevator/LeftRot",     m_leftEnc.GetPosition());
-  ElevatorNetTable->PutNumber ("Elevator/RightRot",    m_rightEnc.GetPosition());
-  ElevatorNetTable->PutNumber ("Elevator/TargetRot",   m_targetRot);
-  ElevatorNetTable->PutNumber ("Elevator/Height_m",    GetHeight().value());
+  ElevatorNetTable->PutBoolean("LeftHomed",  m_leftHomed);
+  ElevatorNetTable->PutBoolean("RightHomed", m_rightHomed);
+  ElevatorNetTable->PutBoolean("Homing",     m_homing);
+  ElevatorNetTable->PutNumber ("LeftRot",     m_leftEnc.GetPosition());
+  ElevatorNetTable->PutNumber ("RightRot",    m_rightEnc.GetPosition());
+  ElevatorNetTable->PutNumber ("TargetRot",   m_targetRot);
+  ElevatorNetTable->PutNumber ("Height_m",    GetHeight().value());
 
   // Publish live skew (meters) to help tune deadband and fault levels
   const double leftPos  = m_leftEnc.GetPosition();
   const double rightPos = m_rightEnc.GetPosition();
   const auto  skew_m    = RotToMeters(leftPos - rightPos);
-  ElevatorNetTable->PutNumber ("Elevator/Skew_m",      skew_m.value());
+  ElevatorNetTable->PutNumber ("Skew_m",      skew_m.value());
 
-  ElevatorNetTable->PutBoolean("Elevator/AtSetpoint",  AtSetpoint());
+  ElevatorNetTable->PutBoolean("AtSetpoint",  AtSetpoint());
 }
