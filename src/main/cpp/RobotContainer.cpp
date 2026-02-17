@@ -87,9 +87,16 @@ void RobotContainer::ConfigureBindings() {
     );
 
   //test elevator
-  m_buttons.Button(1).OnTrue(m_elevator.SpinDownTestCmd(0.1,units::time::second_t {2.0}));
-  m_buttons.Button(2).OnTrue(m_elevator.SpinUpTestCmd(0.1,units::time::second_t {2.0}));
+  //m_buttons.Button(1).OnTrue(m_elevator.SpinDownTestCmd(0.2,units::time::second_t {1.0}));
+  //m_buttons.Button(2).OnTrue(m_elevator.SpinUpTestCmd(0.2,units::time::second_t {1.0}));
 
+  //run elevator
+  m_buttons.Button(1).OnTrue(m_elevator.HomeCmd());
+  m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.02}));
+  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.03}));
+  m_buttons.Button(4).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.04}));
+  m_buttons.Button(5).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.05}));
+  m_buttons.Button(6).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.06}));
 }
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {

@@ -192,7 +192,7 @@ namespace Elevator {
     inline constexpr double kVoltageCompensation = 12.0;
 
     // Homing
-    inline constexpr double kHomeSpeedPct = -0.10; // negative = down
+    inline constexpr double kHomeSpeedPct = -0.20; // negative = down
     inline constexpr units::second_t kHomeTimeout = 5_s;
 
     // Sync / skew

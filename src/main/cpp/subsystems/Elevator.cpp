@@ -209,7 +209,7 @@ void Elevator::Periodic() {
 
     // Left side homing
     if (!m_leftHomed) {
-      if (LeftBottomPressed()) {
+      if (!LeftBottomPressed()) {
         m_left.Set(0.0);
         m_leftEnc.SetPosition(0.0);
         m_leftHomed = true;
@@ -222,7 +222,7 @@ void Elevator::Periodic() {
 
     // Right side homing
     if (!m_rightHomed) {
-      if (RightBottomPressed()) {
+      if (!RightBottomPressed()) {
         m_right.Set(0.0);
         m_rightEnc.SetPosition(0.0);
         m_rightHomed = true;
