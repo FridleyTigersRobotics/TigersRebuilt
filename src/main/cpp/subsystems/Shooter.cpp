@@ -260,6 +260,8 @@ frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
           }
           const units::meter_t shotdist = MetersToTarget(allianceHubCoords);
           const double rpm = {0.0}; // m_distToRpm(shotdist); calculation here
+          const double deg = {0.0}; // m_distToAngle(shootdist); calculation here
+          this->SetHoodDeg(deg);
           this->SetTargetRPM(rpm);
         },
         // end: ensure shooter is safe when command ends or is interrupted
