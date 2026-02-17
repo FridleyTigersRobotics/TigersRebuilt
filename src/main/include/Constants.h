@@ -173,7 +173,9 @@ namespace Elevator {
     inline constexpr int kRightBottomDio = 2;
 
     // Geometry
-    inline constexpr double kLeadMetersPerRev = 0.002; // TR12x2 lead (2 mm/rev)
+    inline constexpr double kLeadPitch = 0.002; // TR12x2 lead (2 mm/rev)
+    inline constexpr double kSprocketRatio = ( 12.0 / 20.0 ); // 12 tooth sproket on motor, 20 tooth sproket on shaft
+    inline constexpr double kLeadMetersPerRev = ( kLeadPitch * kSprocketRatio ); 
 
     // Range & tolerances
     inline constexpr units::meter_t kMinHeight = 0.00_m;
