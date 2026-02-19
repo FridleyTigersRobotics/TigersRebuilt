@@ -75,4 +75,13 @@ class Shooter : public frc2::SubsystemBase {
   // When the homing transition completes, Periodic() will apply this and clear it.
   std::optional<double> m_hoodPendingDeg;
 
+  
+  struct ShotParams {
+    double rpm;  // shooter wheel speed
+    double deg;  // hood angle
+  };
+
+  ShotParams DistToShotParams(units::meter_t shootdist) const;
+
+
 };

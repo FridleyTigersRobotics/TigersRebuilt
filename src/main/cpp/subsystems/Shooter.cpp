@@ -259,13 +259,20 @@ frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
             allianceHubCoords = constants::Field::kBlueHubCoord;
           }
           const units::meter_t shotdist = MetersToTarget(allianceHubCoords);
-          const double rpm = {0.0}; // m_distToRpm(shotdist); calculation here
-          const double deg = {0.0}; // m_distToAngle(shootdist); calculation here
-          this->SetHoodDeg(deg);
-          this->SetTargetRPM(rpm);
+          const Shooter::ShotParams shot = DistToShotParams(shotdist);
+          this->SetHoodDeg(shot.deg);
+          this->SetTargetRPM(shot.rpm);
         },
         // end: ensure shooter is safe when command ends or is interrupted
         [this] { this->Stop(); },
         {this}
     );
 }
+
+Shooter::ShotParams Shooter::DistToShotParams(units::meter_t shootdist) const {
+  Shooter::ShotParams shot;
+  shot.deg = {0.00};
+  shot.rpm = {0.00};
+  return shot;
+}
+
