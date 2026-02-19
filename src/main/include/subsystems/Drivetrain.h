@@ -30,28 +30,47 @@
 #include "Constants.h"
 
 namespace DriveIds {
-constexpr int kFL_Drive = 4;
-constexpr int kFL_Turn  = 5;
-constexpr int kFR_Drive = 3;
-constexpr int kFR_Turn  = 2;
-constexpr int kBL_Drive = 8;
-constexpr int kBL_Turn  = 9;
-constexpr int kBR_Drive = 7;
-constexpr int kBR_Turn  = 6;
+// constexpr int kFL_Drive = 4;
+// constexpr int kFL_Turn  = 5;
+// constexpr int kFR_Drive = 3;
+// constexpr int kFR_Turn  = 2;
+// constexpr int kBL_Drive = 8;
+// constexpr int kBL_Turn  = 9;
+// constexpr int kBR_Drive = 7;
+// constexpr int kBR_Turn  = 6;
+constexpr int kFL_Drive = 7;
+constexpr int kFL_Turn  = 6;
+constexpr int kFR_Drive = 8;
+constexpr int kFR_Turn  = 9;
+constexpr int kBL_Drive = 3;
+constexpr int kBL_Turn  = 2;
+constexpr int kBR_Drive = 4;
+constexpr int kBR_Turn  = 5;
 
-constexpr int kFL_CANCoder = 11;
-constexpr int kFR_CANCoder = 13;
-constexpr int kBL_CANCoder = 10;
-constexpr int kBR_CANCoder = 12;
+// constexpr int kFL_CANCoder = 11;
+// constexpr int kFR_CANCoder = 13;
+// constexpr int kBL_CANCoder = 10;
+// constexpr int kBR_CANCoder = 12;
+constexpr int kFL_CANCoder = 12;
+constexpr int kFR_CANCoder = 10;
+constexpr int kBL_CANCoder = 13;
+constexpr int kBR_CANCoder = 11;
+
 }  // namespace DriveIds
 
 namespace DriveConst {
 constexpr auto kMaxModuleSpeed = units::meters_per_second_t{3.7}; //match kMaxSpeed below
 
-constexpr auto kFL_Offset = units::radian_t{-1.404};
-constexpr auto kFR_Offset = units::radian_t{-2.315};
-constexpr auto kBL_Offset = units::radian_t{-2.331};
-constexpr auto kBR_Offset = units::radian_t{-0.20};
+// constexpr auto kFL_Offset = units::radian_t{-1.404};
+// constexpr auto kFR_Offset = units::radian_t{-2.315};
+// constexpr auto kBL_Offset = units::radian_t{-2.331};
+// constexpr auto kBR_Offset = units::radian_t{-0.20};
+constexpr auto kFL_Offset = units::radian_t{-0.20};
+constexpr auto kFR_Offset = units::radian_t{-2.331};
+constexpr auto kBL_Offset = units::radian_t{-2.315};
+constexpr auto kBR_Offset = units::radian_t{-1.404};
+
+
 }  // namespace DriveConst
 
 class Drivetrain : public frc2::SubsystemBase {

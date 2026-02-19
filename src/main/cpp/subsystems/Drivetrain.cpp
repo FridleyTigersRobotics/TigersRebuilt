@@ -31,7 +31,7 @@ double Drivetrain::ShapeInput(double v, double deadband) {
 frc::Rotation2d Drivetrain::GetGyroRotation() {
   // Studica navX returns degrees; method is non-const
   const auto yaw_deg = frc::Rotation2d{units::degree_t{m_gyro.GetAngle()}};
-  return frc::Rotation2d{ -yaw_deg }; // ← invert once, use everywhere
+  return frc::Rotation2d{ -yaw_deg }; // invert once, use everywhere
 }
 
 // ---------------------------------------------------------------------------
