@@ -23,7 +23,7 @@ using namespace units::literals;
 #include "commands/Autos.h"
 #include "commands/ExampleCommand.h"
 
-RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_elevator() {
+RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_elevator(), m_intake() {
   // NOTE: Drivetrain owns navX now; do not set it here
   // VisionPoseEstimator::SetNavX(&m_navx);  // (removed)
 
@@ -94,9 +94,26 @@ void RobotContainer::ConfigureBindings() {
   m_buttons.Button(1).OnTrue(m_elevator.HomeCmd());
   m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.02}));
   m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.03}));
-  m_buttons.Button(4).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.04}));
-  m_buttons.Button(5).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.05}));
-  m_buttons.Button(6).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.06}));
+
+  // Wheels RPM presets
+  m_buttons.Button(4).WhileTrue(
+    frc2::cmd::StartEnd(
+      [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeRPM); },
+      [this]{ m_intake.StopWheels(); },
+      {&m_intake}
+    )
+  );
+  m_buttons.Button(5).WhileTrue(
+    frc2::cmd::StartEnd(
+      [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kOuttakeRPM); },
+      [this]{ m_intake.StopWheels(); },
+      {&m_intake}
+    )
+  );
+
+  // Homing and a preset angle
+  m_buttons.Button(6).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.StartHoming(); }, {&m_intake}).IgnoringDisable(true));
+  m_buttons.Button(7).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.SetAngleDeg(constants::Intake::kIntakeDeg); }, {&m_intake}));
 }
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {

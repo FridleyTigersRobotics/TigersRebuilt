@@ -16,6 +16,7 @@
 #include "subsystems/Drivetrain.h"
 #include "subsystems/Shooter.h"
 #include "subsystems/Elevator.h"
+#include "subsystems/Intake.h"
 #include "Vision.h"
 
 /**
@@ -43,6 +44,7 @@ class RobotContainer {
   Drivetrain m_drivetrain;
   Shooter m_shooter;
   Elevator m_elevator;
+  Intake m_intake;
 
   // Vision: pass a no-op callback matching Vision's expected signature
   //   (frc::Pose2d, units::second_t, Eigen::Matrix<double,3,1>)
