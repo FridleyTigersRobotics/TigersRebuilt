@@ -93,11 +93,11 @@ frc2::CommandPtr Indexer::RunCmd(double magnitude, bool forward) {
 }
 
 frc2::CommandPtr Indexer::RunSetCmd() {
-  return RunCmd(constants::Indexer::kRunPercent, /*forward=*/true).WithName("IndexerRunDefaultCmd");
+  return RunCmd(constants::Indexer::kRunPercent, /*forward=*/true).WithName("IndexerRunSetCmd");
 }
 
 frc2::CommandPtr Indexer::ReverseSetCmd() {
-  return RunCmd(constants::Indexer::kRunPercent, /*forward=*/false).WithName("IndexerReverseDefaultCmd");
+  return RunCmd(constants::Indexer::kRunPercent, /*forward=*/false).WithName("IndexerReverseSetCmd");
 }
 
 frc2::CommandPtr Indexer::StopCmd() {
