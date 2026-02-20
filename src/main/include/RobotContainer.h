@@ -17,6 +17,7 @@
 #include "subsystems/Shooter.h"
 #include "subsystems/Elevator.h"
 #include "subsystems/Intake.h"
+#include "subsystems/Indexer.h"
 #include "Vision.h"
 
 /**
@@ -45,6 +46,7 @@ class RobotContainer {
   Shooter m_shooter;
   Elevator m_elevator;
   Intake m_intake;
+  Indexer m_indexer;
 
   // Vision: pass a no-op callback matching Vision's expected signature
   //   (frc::Pose2d, units::second_t, Eigen::Matrix<double,3,1>)

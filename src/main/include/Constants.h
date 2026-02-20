@@ -271,5 +271,14 @@ namespace Intake {
 
 } // namespace Intake
 
+namespace Indexer {
+    inline constexpr int kLowerMotorCanID = 28;
+    inline constexpr int kUpperMotorCanId = 29;
+    inline constexpr double kRunPercent = 0.90;
+    inline constexpr double kUpperLowerRatio = 1.00;
+    inline constexpr bool kLowerInverted = false;
+    inline constexpr bool kUpperInverted = false;
+} // namespace Indexer
+
 
 }  // namespace constants

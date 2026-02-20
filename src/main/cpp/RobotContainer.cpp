@@ -23,7 +23,7 @@ using namespace units::literals;
 #include "commands/Autos.h"
 #include "commands/ExampleCommand.h"
 
-RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_elevator(), m_intake() {
+RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_elevator(), m_intake(), m_indexer() {
   // NOTE: Drivetrain owns navX now; do not set it here
   // VisionPoseEstimator::SetNavX(&m_navx);  // (removed)
 
@@ -114,6 +114,24 @@ void RobotContainer::ConfigureBindings() {
   // Homing and a preset angle
   m_buttons.Button(6).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.StartHoming(); }, {&m_intake}).IgnoringDisable(true));
   m_buttons.Button(7).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.SetAngleDeg(constants::Intake::kIntakeDeg); }, {&m_intake}));
+
+  // Example bindings (while-held to run, release to stop)
+  m_buttons.Button(8)
+    .WhileTrue(m_indexer.RunSetCmd())
+    .WhileFalse(m_indexer.StopCmd());
+
+  m_buttons.Button(9)
+    .WhileTrue(m_indexer.ReverseSetCmd())
+    .WhileFalse(m_indexer.StopCmd());
+
+  // Custom magnitude example (35% forward)
+  m_driverController.LeftBumper()
+    .WhileTrue(m_indexer.RunCmd(0.35, /*forward=*/true))
+    .WhileFalse(m_indexer.StopCmd());
+
+  // (Optional) default command keeps it stopped
+  m_indexer.SetDefaultCommand(m_indexer.StopCmd());
+
 }
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {
