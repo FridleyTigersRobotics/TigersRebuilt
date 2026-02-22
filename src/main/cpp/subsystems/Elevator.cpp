@@ -57,12 +57,11 @@ void Elevator::RequestHome() {
 }
 
 bool Elevator::LeftBottomPressed() const {
-  // Active-low assumption (pressed => false). Flip the '!' if wired active-high.
-  return !m_leftBottom.Get();
+  return m_leftBottom.Get();
 }
 
 bool Elevator::RightBottomPressed() const {
-  return !m_rightBottom.Get();
+  return m_rightBottom.Get();
 }
 
 double Elevator::MetersToRot(units::meter_t m) {
@@ -138,11 +137,25 @@ void Elevator::ApplyPositionReferences() {
 }
 
 frc2::CommandPtr Elevator::HomeCmd() {
-  // Request homing once, then wait until both sides have homed
+  // Command owns the timeout; Periodic() should not do any timeout checks.
   return frc2::cmd::Sequence(
-           frc2::cmd::RunOnce([this] { RequestHome(); }, {this}),
+           // 1) Start homing and clear the UI timeout latch
+           frc2::cmd::RunOnce([this] {
+             ElevatorNetTable->PutBoolean("HomeTimeout", false);
+             RequestHome();
+           }, {this}),
+           // 2) Wait until homed, but give up after the configured timeout
            frc2::cmd::WaitUntil([this] { return IsHomed(); })
-         ).WithName("ElevatorHome");
+             .WithTimeout(constants::Elevator::kHomeTimeout)
+         )
+         .FinallyDo([this] {
+            if (!IsHomed()) {
+              Stop();
+              m_homing = false;
+              ElevatorNetTable->PutBoolean("HomeTimeout", true);
+            }
+          })
+         .WithName("ElevatorHome");
 }
 
 frc2::CommandPtr Elevator::SetHeightCmd(units::meter_t targetHeight) {
@@ -194,35 +207,25 @@ frc2::CommandPtr Elevator::SpinUpTestCmd(double pct, units::second_t time) {
 }
 
 void Elevator::Periodic() {
-  // ----- HOMING -----
+  // ----- HOMING (command owns timeout) -----
   if (m_homing) {
-    const auto elapsed = frc::Timer::GetFPGATimestamp() - m_homeStartTime;
-    if (elapsed > c::kHomeTimeout) {
-      Stop();
-      m_homing = false;
-      ElevatorNetTable->PutBoolean("HomeTimeout", true);
-      UpdateNetTable();
-      return;
-    } else {
-      ElevatorNetTable->PutBoolean("HomeTimeout", false);
-    }
-
-    // Left side homing
+    // Left side: drive down until bottom switch PRESSED, then zero & mark homed
     if (!m_leftHomed) {
-      if (!LeftBottomPressed()) {
+      if (LeftBottomPressed()) {
         m_left.Set(0.0);
         m_leftEnc.SetPosition(0.0);
         m_leftHomed = true;
       } else {
-        m_left.Set(c::kHomeSpeedPct);  // negative = down
+        // Ensure this moves toward the switch; if "down" is negative, keep it negative.
+        m_left.Set(c::kHomeSpeedPct);
       }
     } else {
       m_left.Set(0.0);
     }
 
-    // Right side homing
+    // Right side: same as left
     if (!m_rightHomed) {
-      if (!RightBottomPressed()) {
+      if (RightBottomPressed()) {
         m_right.Set(0.0);
         m_rightEnc.SetPosition(0.0);
         m_rightHomed = true;
@@ -233,16 +236,16 @@ void Elevator::Periodic() {
       m_right.Set(0.0);
     }
 
-    // Finish homing
+    // Finish homing when both sides are homed
     if (m_leftHomed && m_rightHomed) {
-      m_homing = false;
-      m_targetRot = 0.0;
+      m_homing = false;         // allow command to observe IsHomed() and finish
+      m_targetRot = 0.0;        // zero target at home
       m_hasTarget = true;
-      ApplyPositionReferences();
+      ApplyPositionReferences(); // command may complete same loop; hold at zero
     }
 
     UpdateNetTable();
-    return;  // skip normal control while homing
+    return; // Skip normal control while homing
   }
 
   // ----- NORMAL CLOSED-LOOP -----
