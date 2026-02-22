@@ -41,11 +41,6 @@ RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_el
           },
           {&m_drivetrain}));
 
-  // Default shooter to stop spinning using its own command
-  m_shooter.SetDefaultCommand(
-      m_shooter.StopCommand()
-  );
-
 }
 
 void RobotContainer::ConfigureBindings() {
@@ -72,6 +67,7 @@ void RobotContainer::ConfigureBindings() {
 
   //run shooter, simple given speed to test
   m_driverController.A().WhileTrue(m_shooter.SetRPMCommand(5000.0));
+  m_driverController.A().OnFalse(m_shooter.StopCommand());
 
   m_buttons.Button(8).OnTrue(m_shooter.SetHoodDegCommand(20.0));
   m_buttons.Button(7).OnTrue(m_shooter.SetHoodDegCommand(10.0));
