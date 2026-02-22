@@ -101,7 +101,7 @@ inline constexpr double kSnapAngleDeg       = 20.0;  // snap if heading differs 
 namespace Shooter {
   // motor Can ID
   inline constexpr int kShooterCanId = 21;
-  inline constexpr int kShooterFolllowerCanId = 22;
+  inline constexpr int kShooterFollowerCanId = 22;
   inline constexpr int kHoodMotorCanId = 23;
 
   // Electrical & safety (unchanged if you already set these)

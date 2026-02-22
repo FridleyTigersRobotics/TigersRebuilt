@@ -46,7 +46,7 @@ class Shooter : public frc2::SubsystemBase {
       rev::spark::SparkLowLevel::MotorType::kBrushless};
 
   rev::spark::SparkFlex m_shooterMotorFollower{
-      constants::Shooter::kShooterFolllowerCanId,
+      constants::Shooter::kShooterFollowerCanId,
       rev::spark::SparkLowLevel::MotorType::kBrushless};
 
   rev::spark::SparkMax m_hoodMotor{
