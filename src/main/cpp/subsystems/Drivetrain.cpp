@@ -100,9 +100,9 @@ void Drivetrain::DriveFromXbox(const frc::XboxController& controller,
                                units::second_t period,
                                double deadband) {
   // WPILib Y is inverted; invert so up is +forward
-  const double rawX   = -controller.GetLeftY();
-  const double rawY   = -controller.GetLeftX();
-  const double rawRot = -controller.GetRightX();
+  const double rawX   = controller.GetLeftY();
+  const double rawY   = controller.GetLeftX();
+  const double rawRot = controller.GetRightX();
 
   const double shapedX   = ShapeInput(rawX,   deadband);
   const double shapedY   = ShapeInput(rawY,   deadband);
@@ -130,8 +130,8 @@ void Drivetrain::DriveFromXboxAim(const frc::XboxController& controller,
                                   const frc::Translation2d& targetXY) {
   // ----------------- Translation from left stick (unchanged) -----------------
   // WPILib Y is inverted; invert so up is +forward
-  const double rawX = -controller.GetLeftY();
-  const double rawY = -controller.GetLeftX();
+  const double rawX = controller.GetLeftY();
+  const double rawY = controller.GetLeftX();
 
   const double shapedX = ShapeInput(rawX, deadband);
   const double shapedY = ShapeInput(rawY, deadband);

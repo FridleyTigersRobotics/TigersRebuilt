@@ -236,7 +236,7 @@ namespace Intake {
     inline constexpr double kWheelsD       = 0.0;
     inline constexpr double kWheelsFF_kS   = 0.0;      // add only if needed
     inline constexpr double kWheelsFF_kV   = 12.0 / 1733.0; // ≈ 0.0069 V/RPM
-    inline constexpr double kIntakeRPM     = 1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead
+    inline constexpr double kIntakeRPM     = -1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead
     inline constexpr double kOuttakeRPM    = 1500.0;
     inline constexpr double kMechRPMperMotorRPM = 1.0 / 3.0;
 
