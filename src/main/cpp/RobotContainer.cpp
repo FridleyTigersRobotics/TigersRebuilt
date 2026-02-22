@@ -73,6 +73,10 @@ void RobotContainer::ConfigureBindings() {
   //run shooter, simple given speed to test
   m_driverController.A().WhileTrue(m_shooter.SetRPMCommand(5000.0));
 
+  m_buttons.Button(8).OnTrue(m_shooter.SetHoodDegCommand(20.0));
+  m_buttons.Button(7).OnTrue(m_shooter.SetHoodDegCommand(10.0));
+  m_buttons.Button(9).OnTrue(m_shooter.SetHoodDegCommand(30.0));
+
   //calculate shot and spin up shooter
   m_driverController.RightBumper().WhileTrue(
     m_shooter.CalcAndSetShotCmd()
@@ -93,17 +97,19 @@ void RobotContainer::ConfigureBindings() {
   //run elevator
   m_buttons.Button(1).OnTrue(m_elevator.HomeCmd());
   m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.02}));
-  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.03}));
+  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.25}));
+
+  //
 
   // Wheels RPM presets
-  m_buttons.Button(4).WhileTrue(
+  m_buttons.Button(11).WhileTrue(
     frc2::cmd::StartEnd(
       [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeRPM); },
       [this]{ m_intake.StopWheels(); },
       {&m_intake}
     )
   );
-  m_buttons.Button(5).WhileTrue(
+  m_buttons.Button(11).WhileTrue(
     frc2::cmd::StartEnd(
       [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kOuttakeRPM); },
       [this]{ m_intake.StopWheels(); },
@@ -116,11 +122,11 @@ void RobotContainer::ConfigureBindings() {
   m_buttons.Button(7).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.SetAngleDeg(constants::Intake::kIntakeDeg); }, {&m_intake}));
 
   // Example bindings (while-held to run, release to stop)
-  m_buttons.Button(8)
+  m_buttons.Button(11)
     .WhileTrue(m_indexer.RunSetCmd())
     .WhileFalse(m_indexer.StopCmd());
 
-  m_buttons.Button(9)
+  m_buttons.Button(11)
     .WhileTrue(m_indexer.ReverseSetCmd())
     .WhileFalse(m_indexer.StopCmd());
 

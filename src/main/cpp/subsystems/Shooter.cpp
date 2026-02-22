@@ -2,6 +2,7 @@
 #include "subsystems/Shooter.h"
 
 #include <rev/config/SparkMaxConfig.h>
+#include <rev/config/SparkFlexConfig.h>
 #include <frc/DriverStation.h>
 #include <frc/Timer.h>
 
@@ -35,7 +36,7 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
 
   // ---------- Shooter flywheel base configuration ----------
   {
-    rev::spark::SparkMaxConfig cfg;
+    rev::spark::SparkFlexConfig cfg;
     cfg.Inverted(kInvertMotor);
     cfg.SmartCurrentLimit(kSmartCurrentLimit);
     cfg.VoltageCompensation(kVoltageCompensation);
@@ -54,7 +55,7 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
 
   // ---------- Follower (mirror the leader on-device) ----------
   {
-    rev::spark::SparkMaxConfig fcfg;
+    rev::spark::SparkFlexConfig fcfg;
     fcfg.Follow(m_shooterMotor, /*invert=*/true);
     fcfg.SmartCurrentLimit(kSmartCurrentLimit);
     fcfg.VoltageCompensation(kVoltageCompensation);
@@ -73,6 +74,7 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
     hcfg.SmartCurrentLimit(kSmartCurrentLimit550);
     hcfg.VoltageCompensation(kVoltageCompensation);
     hcfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kBrake);
+    hcfg.Inverted(true);
 
     // 1) Report encoder in *degrees at hood* so Spark position setpoints use degrees
     hcfg.encoder.PositionConversionFactor(kHoodDegPerMotorRot);

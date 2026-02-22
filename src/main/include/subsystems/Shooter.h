@@ -6,6 +6,7 @@
 #include <frc2/command/Commands.h>     // frc2::cmd::RunOnce
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <rev/SparkMax.h>
+#include <rev/SparkFlex.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
 #include <frc/DigitalInput.h> 
@@ -39,12 +40,12 @@ class Shooter : public frc2::SubsystemBase {
 
  private:
   Drivetrain& m_drive;
-  // SparkMax + NEO (CAN)
-  rev::spark::SparkMax m_shooterMotor{
+  // SparkFlex + NEO (CAN)
+  rev::spark::SparkFlex m_shooterMotor{
       constants::Shooter::kShooterCanId,
       rev::spark::SparkLowLevel::MotorType::kBrushless};
 
-  rev::spark::SparkMax m_shooterMotorFollower{
+  rev::spark::SparkFlex m_shooterMotorFollower{
       constants::Shooter::kShooterFolllowerCanId,
       rev::spark::SparkLowLevel::MotorType::kBrushless};
 

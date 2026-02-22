@@ -127,8 +127,8 @@ namespace Shooter {
 
   //Hood Constants
   inline constexpr int    kHoodDio               = 0;       // DIO channel for hood homing switch
-  inline constexpr bool   kHoodActiveLow         = true;    // true if pressed pulls DIO low
-  inline constexpr double kHoodDegPerMotorRot    = 3.6;     // 360.0 / gearRatio_to_hood
+  inline constexpr bool   kHoodActiveLow         = false;    // true if pressed pulls DIO low
+  inline constexpr double kHoodDegPerMotorRot    = 1.00;     // 360.0 / gearRatio_to_hood
   // Spark on-device PID for hood position (units are degrees due to conversion factor)
   inline constexpr double kHood_kP               = 0.12;
   inline constexpr double kHood_kI               = 0.0;
@@ -137,7 +137,7 @@ namespace Shooter {
   inline constexpr double kHoodOutMin            = -1.0;
   inline constexpr double kHoodOutMax            =  1.0;
   // Homing duty toward the switch while disabled CL
-  inline constexpr double kHoodHomeDuty          = -0.15;   // sign to drive toward switch
+  inline constexpr double kHoodHomeDuty          = -0.05;   // sign to drive toward switch
   inline constexpr units::second_t kHomingTimeout = units::second_t{5.0};
 
 
