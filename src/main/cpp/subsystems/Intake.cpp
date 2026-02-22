@@ -126,12 +126,12 @@ void Intake::ApplyAngleSetpoint_() {
 void Intake::PublishTelemetry_() {
   if (!m_publishTelemetry) return;
 
-  IntakeNetTable->PutBoolean("Intake/Homed", m_homed);
-  IntakeNetTable->PutBoolean("Intake/HomingActive", m_homingActive);
-  IntakeNetTable->PutBoolean("Intake/HomeSwitch", HomeSwitchPressed_());
-  IntakeNetTable->PutNumber("Intake/AngleDeg", GetAngleDeg());
-  IntakeNetTable->PutNumber("Intake/AngleRot", m_angleEnc.GetPosition());
-  IntakeNetTable->PutNumber("Intake/WheelsRPM", m_wheelsEnc.GetVelocity());
+  IntakeNetTable->PutBoolean("Homed", m_homed);
+  IntakeNetTable->PutBoolean("HomingActive", m_homingActive);
+  IntakeNetTable->PutBoolean("HomeSwitch", HomeSwitchPressed_());
+  IntakeNetTable->PutNumber("AngleDeg", GetAngleDeg());
+  IntakeNetTable->PutNumber("AngleRot", m_angleEnc.GetPosition());
+  IntakeNetTable->PutNumber("WheelsRPM", m_wheelsEnc.GetVelocity());
 }
 
 void Intake::Periodic() {

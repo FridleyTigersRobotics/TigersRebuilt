@@ -114,17 +114,19 @@ void RobotContainer::ConfigureBindings() {
   );
 
   // Homing and a preset angle
-  m_buttons.Button(11).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.StartHoming(); }, {&m_intake}).IgnoringDisable(true));
-  m_buttons.Button(11).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.SetAngleDeg(constants::Intake::kIntakeDeg); }, {&m_intake}));
-
+  m_buttons.Button(6).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.StartHoming(); }, {&m_intake}).IgnoringDisable(true));
+  m_buttons.Button(5).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.SetAngleDeg(constants::Intake::kIntakeDeg); }, {&m_intake}));
+  m_buttons.Button(4).WhileTrue((frc2::cmd::RunOnce([this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeSpeed); }, {&m_intake})));
+  m_buttons.Button(4).OnFalse((frc2::cmd::RunOnce([this]{ m_intake.StopWheels(); }, {&m_intake})));
   // Example bindings (while-held to run, release to stop)
-  m_buttons.Button(4)
+  m_buttons.Button(11)
     .WhileTrue(m_indexer.RunSetCmd())
     .OnFalse(m_indexer.StopCmd());
 
-  m_buttons.Button(5)
+  m_buttons.Button(11)
     .WhileTrue(m_indexer.ReverseSetCmd())
     .OnFalse(m_indexer.StopCmd());
+
 
   // (Optional) default command keeps it stopped
   //m_indexer.SetDefaultCommand(m_indexer.StopCmd());

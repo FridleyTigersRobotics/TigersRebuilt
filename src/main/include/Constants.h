@@ -222,7 +222,7 @@ namespace Intake {
     inline constexpr int  kWheelsMotorCanId      = 26;
     inline constexpr int  kAngleMotorCanId       = 27;
 
-    inline const bool     kWheelsInverted        = false;
+    inline const bool     kWheelsInverted        = true;
     inline const bool     kAngleInverted         = false;
 
     inline const int      kWheelsCurrentLimitA   = 10;  // A
@@ -248,16 +248,18 @@ namespace Intake {
     inline constexpr double kAngleFF_kV = 0.0;       // usually 0
     inline constexpr double kDegPerMotorRot = 7.5;  // Example; compute from gear ratio and linkage
 
+    inline constexpr double kIntakeSpeed = 5500.00;
+
 
     // Geometry conversion:
     // If 120° pivot travel corresponds to 24 motor rotations:
     //   rotations/deg = 24 / 120 = 0.20
-    inline constexpr double kRotationsPerDegree = 0.314;  // [motor rotations] per [mechanism degree]
+    inline constexpr double kRotationsPerDegree = 2.69;  // [motor rotations] per [mechanism degree]
 
     // Useful preset angles (degrees) — optional
     inline constexpr double kStowDeg       = 0.0;
-    inline constexpr double kIntakeDeg     = 90.0;
-    inline constexpr double kSafeTravelDeg = 20.0;
+    inline constexpr double kIntakeDeg     = 96.0;
+    inline constexpr double kSafeTravelDeg = 60.0;
 
     // ---------------------------------
     // Homing: RIO DIO limit switch
