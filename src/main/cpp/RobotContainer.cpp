@@ -93,7 +93,7 @@ void RobotContainer::ConfigureBindings() {
   //run elevator
   m_buttons.Button(1).OnTrue(m_elevator.HomeCmd());
   m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.02}));
-  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.25}));
+  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kMaxHeight));
 
   //
 

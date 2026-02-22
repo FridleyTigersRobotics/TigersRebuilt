@@ -252,12 +252,12 @@ namespace Intake {
     // Geometry conversion:
     // If 120° pivot travel corresponds to 24 motor rotations:
     //   rotations/deg = 24 / 120 = 0.20
-    inline constexpr double kRotationsPerDegree = 0.20;  // [motor rotations] per [mechanism degree]
+    inline constexpr double kRotationsPerDegree = 0.314;  // [motor rotations] per [mechanism degree]
 
     // Useful preset angles (degrees) — optional
     inline constexpr double kStowDeg       = 0.0;
-    inline constexpr double kIntakeDeg     = 35.0;
-    inline constexpr double kSafeTravelDeg = 10.0;
+    inline constexpr double kIntakeDeg     = 90.0;
+    inline constexpr double kSafeTravelDeg = 20.0;
 
     // ---------------------------------
     // Homing: RIO DIO limit switch
@@ -265,7 +265,7 @@ namespace Intake {
     //   flip kHomeSwitchActiveLow.
     // ---------------------------------
     inline constexpr int                kHomeDIOChannel      = 3;        // your configuration
-    inline constexpr bool               kHomeSwitchActiveLow = false;    // true if pressed reads LOW (NC wiring)
+    inline constexpr bool               kHomeSwitchActiveLow = false;    
     inline constexpr double             kHomeSpeed           = -0.15;    // duty cycle toward switch (flip sign if wrong direction)
     inline constexpr units::second_t    kHomeTimeout         = 3.0_s;    // max allowed homing time
 
