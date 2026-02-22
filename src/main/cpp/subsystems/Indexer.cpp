@@ -32,6 +32,7 @@ void Indexer::ConfigureMotors_() {
   ucfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kCoast);
   ucfg.SmartCurrentLimit(40);
   ucfg.SecondaryCurrentLimit(55, 0.200);
+  ucfg.Inverted(true);
 
   m_lower.Configure(lcfg,
                     rev::ResetMode::kResetSafeParameters,
