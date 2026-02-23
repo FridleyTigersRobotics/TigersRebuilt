@@ -4,8 +4,7 @@
 
 #include "GeneralStatusObserver.h"
 #include <filesystem>
-#include <iostream>
-
+#include <hal/DriverStation.h>
 
 GeneralStatusObserver::GeneralStatusObserver(){}
 
@@ -186,31 +185,32 @@ void GeneralStatusObserver::UpdateNetTable(){
 }
 
 void GeneralStatusObserver::DeleteAllLogs() {
-        // Directories to clean: Hoot logs and Tuner X logs
-        std::filesystem::path logDirs[] = {
-            "/home/lvuser/logs",    // Hoot logs
-            "/home/lvuser/tunelog"  // Tuner X logs
-        };
+    std::filesystem::path logDirs[] = {
+        "/home/lvuser/logs",
+        "/home/lvuser/tunelog"
+    };
 
-        for (const auto& dir : logDirs) {
-            if (std::filesystem::exists(dir) && std::filesystem::is_directory(dir)) {
-                try {
-                    size_t count = 0;
-                    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-                        std::filesystem::remove_all(entry);
-                        ++count;
-                    }
-                    // Plain text console output
-                    std::cout << "[INFO] Deleted " << count << " files in: " << dir << std::endl;
-                    std::cout.flush();  // ensure output appears immediately
-                } catch (const std::filesystem::filesystem_error& e) {
-                    std::cout << "[ERROR] Could not delete logs in " << dir
-                              << ": " << e.what() << std::endl;
-                    std::cout.flush();
+    for (const auto& dir : logDirs) {
+        if (std::filesystem::exists(dir) && std::filesystem::is_directory(dir)) {
+            try {
+                size_t count = 0;
+                for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+                    std::filesystem::remove_all(entry);
+                    ++count;
                 }
-            } else {
-                std::cout << "[INFO] Log directory does not exist: " << dir << std::endl;
-                std::cout.flush();
+
+                std::string msg = "Deleted " + std::to_string(count) +
+                                  " files in: " + dir.string() + "\n";
+                HAL_SendConsoleLine(msg.c_str());
+
+            } catch (const std::filesystem::filesystem_error& e) {
+                std::string err = "Could not delete logs in " + dir.string() +
+                                  ": " + e.what() + "\n";
+                HAL_SendConsoleLine(err.c_str());
             }
+        } else {
+            std::string noDir = "Log directory does not exist: " + dir.string() + "\n";
+            HAL_SendConsoleLine(noDir.c_str());
         }
     }
+}
