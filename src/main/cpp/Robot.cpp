@@ -7,9 +7,11 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc/Filesystem.h>
 #include <wpinet/WebServer.h>
+#include <ctre/phoenix6/SignalLogger.hpp>
 
 Robot::Robot() {
   wpi::WebServer::GetInstance().Start(5800, frc::filesystem::GetDeployDirectory());
+  ctre::phoenix6::SignalLogger::Stop();
 }
 
 /**
