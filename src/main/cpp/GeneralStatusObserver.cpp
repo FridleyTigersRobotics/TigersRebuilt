@@ -3,6 +3,8 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "GeneralStatusObserver.h"
+#include <filesystem>
+#include <iostream>
 
 
 GeneralStatusObserver::GeneralStatusObserver(){}
@@ -182,3 +184,33 @@ void GeneralStatusObserver::UpdateNetTable(){
   ObserverNetTable->PutString("Alliance",DetermineAlliance());
   UpdateHubStatus();
 }
+
+void GeneralStatusObserver::DeleteAllLogs() {
+        // Directories to clean: Hoot logs and Tuner X logs
+        std::filesystem::path logDirs[] = {
+            "/home/lvuser/logs",    // Hoot logs
+            "/home/lvuser/tunelog"  // Tuner X logs
+        };
+
+        for (const auto& dir : logDirs) {
+            if (std::filesystem::exists(dir) && std::filesystem::is_directory(dir)) {
+                try {
+                    size_t count = 0;
+                    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+                        std::filesystem::remove_all(entry);
+                        ++count;
+                    }
+                    // Plain text console output
+                    std::cout << "[INFO] Deleted " << count << " files in: " << dir << std::endl;
+                    std::cout.flush();  // ensure output appears immediately
+                } catch (const std::filesystem::filesystem_error& e) {
+                    std::cout << "[ERROR] Could not delete logs in " << dir
+                              << ": " << e.what() << std::endl;
+                    std::cout.flush();
+                }
+            } else {
+                std::cout << "[INFO] Log directory does not exist: " << dir << std::endl;
+                std::cout.flush();
+            }
+        }
+    }

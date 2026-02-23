@@ -19,6 +19,7 @@ class GeneralStatusObserver {
     GeneralStatusObserver();
     void UpdateNetTable();
     void UpdateHubStatus();
+    void DeleteAllLogs();
 
  private:
     frc::PowerDistribution ZipZap{1, frc::PowerDistribution::ModuleType::kRev};

@@ -12,6 +12,7 @@
 Robot::Robot() {
   wpi::WebServer::GetInstance().Start(5800, frc::filesystem::GetDeployDirectory());
   ctre::phoenix6::SignalLogger::Stop();
+  m_observer.DeleteAllLogs();
 }
 
 /**
