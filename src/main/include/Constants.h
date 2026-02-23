@@ -179,7 +179,7 @@ namespace Elevator {
 
     // Range & tolerances
     inline constexpr units::meter_t kMinHeight = 0.00_m;
-    inline constexpr units::meter_t kMaxHeight = 0.20_m;
+    inline constexpr units::meter_t kMaxHeight = 0.123_m;
     inline constexpr units::meter_t kTolerance = 0.003_m; // ±3 mm
 
     // REV PID
