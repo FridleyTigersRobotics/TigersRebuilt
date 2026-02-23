@@ -98,7 +98,7 @@ void RobotContainer::ConfigureBindings() {
   //
 
   // Wheels RPM presets
-  m_buttons.Button(11).WhileTrue(
+  m_buttons.Button(5).WhileTrue(
     frc2::cmd::StartEnd(
       [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeRPM); },
       [this]{ m_intake.StopWheels(); },

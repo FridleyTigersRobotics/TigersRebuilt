@@ -222,7 +222,7 @@ namespace Intake {
     inline constexpr int  kWheelsMotorCanId      = 26;
     inline constexpr int  kAngleMotorCanId       = 27;
 
-    inline const bool     kWheelsInverted        = true;
+    inline const bool     kWheelsInverted        = false;
     inline const bool     kAngleInverted         = false;
 
     inline const int      kWheelsCurrentLimitA   = 10;  // A
