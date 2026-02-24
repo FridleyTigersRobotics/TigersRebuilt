@@ -9,6 +9,7 @@
 #include <rev/SparkFlex.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
+#include <networktables/DoubleTopic.h>
 #include <frc/DigitalInput.h> 
 
 #include "Constants.h"
@@ -31,9 +32,13 @@ class Shooter : public frc2::SubsystemBase {
   // shot calculation and set speed
   frc2::CommandPtr CalcAndSetShotCmd();
 
+    // While-held command: follow Elastic fields (CmdHoodDeg/CmdRPM); on release, zero & stop
+  frc2::CommandPtr ApplyNtShotWhileHeldCmd();
+
   // Helpers
   bool AtSpeed(double tolRpm = 100.0) const;
   units::meter_t MetersToTarget(frc::Translation2d& targetXY);
+  double MetersToHubGoal();
 
   void UpdateNetTable();
   void Periodic() override;
@@ -84,5 +89,11 @@ class Shooter : public frc2::SubsystemBase {
 
   ShotParams DistToShotParams(units::meter_t shootdist) const;
 
+  
+  // Elastic / NetworkTables topics for operator-entered shot
+  nt::DoubleSubscriber m_cmdHoodDegSub;
+  nt::DoubleSubscriber m_cmdRpmSub;
+  static double ClampRpm(double rpmClamp);
+  static double ClampHoodDeg(double degClamp);
 
 };

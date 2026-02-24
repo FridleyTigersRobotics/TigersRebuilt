@@ -40,6 +40,8 @@ class Intake : public frc2::SubsystemBase {
   // Toggle telemetry to SmartDashboard
   void EnableTelemetry(bool enable) { m_publishTelemetry = enable; }
 
+  frc2::CommandPtr ToggleAngleCmd();
+
   void Periodic() override;
 
  private:
@@ -83,4 +85,6 @@ class Intake : public frc2::SubsystemBase {
 
   std::shared_ptr<nt::NetworkTable> IntakeNetTable =
       nt::NetworkTableInstance::GetDefault().GetTable("2227/Intake");
+
+  std::optional<double> m_pendingAngleDeg;
 };

@@ -180,6 +180,7 @@ namespace Elevator {
     // Range & tolerances
     inline constexpr units::meter_t kMinHeight = 0.00_m;
     inline constexpr units::meter_t kMaxHeight = 0.123_m;
+    inline constexpr units::meter_t kClimbHeight = 0.123_m;
     inline constexpr units::meter_t kTolerance = 0.003_m; // ±3 mm
 
     // REV PID
@@ -268,8 +269,9 @@ namespace Intake {
     // ---------------------------------
     inline constexpr int                kHomeDIOChannel      = 3;        // your configuration
     inline constexpr bool               kHomeSwitchActiveLow = false;    
-    inline constexpr double             kHomeSpeed           = -0.15;    // duty cycle toward switch (flip sign if wrong direction)
-    inline constexpr units::second_t    kHomeTimeout         = 3.0_s;    // max allowed homing time
+    inline constexpr double             kHomeSpeed           = -0.25;    // duty cycle toward switch (flip sign if wrong direction)
+    inline constexpr units::second_t    kHomeTimeout         = 5.0_s;    // max allowed homing time
+    inline constexpr double kAngleNearToleranceDeg = 2.0;
 
 } // namespace Intake
 

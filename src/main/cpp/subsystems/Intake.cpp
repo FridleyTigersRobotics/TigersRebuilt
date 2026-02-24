@@ -4,6 +4,8 @@
 #include "subsystems/Intake.h"
 #include <algorithm>
 #include <cmath>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Commands.h> 
 
 Intake::Intake() {
   ConfigureMotors_();
@@ -70,7 +72,16 @@ void Intake::StopWheels() {
 }
 
 void Intake::SetAngleDeg(double deg) {
-  if (!m_homed) return;
+  if (!m_homed) {
+    // If we're not homed, ensure homing is running and remember this request
+    if (!m_homingActive) {
+      StartHoming();
+    }
+    m_pendingAngleDeg = deg;   // queue to apply after homing completes
+    return;
+  }
+
+  // Normal path once homed
   double tgtRot = DegToRot(deg);
   m_angleSetpointRot = tgtRot;
   ApplyAngleSetpoint_();
@@ -94,18 +105,22 @@ void Intake::StartHoming() {
 void Intake::RunHoming_() {
   if (!m_homingActive) return;
 
-  // Drive toward the physical stop with switch at the reverse end
+  // Drive toward the physical stop
   m_angle.Set(constants::Intake::kHomeSpeed);
 
   // Success: switch pressed
   if (HomeSwitchPressed_()) {
     m_angle.Set(0.0);
-
-    // Define switch position as zero reference
     m_angleEnc.SetPosition(0.0);
-
     m_homed = true;
     m_homingActive = false;
+
+    // If we had a pending angle request, apply it now
+    if (m_pendingAngleDeg.has_value()) {
+      m_angleSetpointRot = DegToRot(*m_pendingAngleDeg);
+      m_pendingAngleDeg.reset();
+      ApplyAngleSetpoint_();
+    }
     return;
   }
 
@@ -114,6 +129,7 @@ void Intake::RunHoming_() {
     m_angle.Set(0.0);
     m_homingActive = false;
     m_homed = false; // not homed
+    // Keep m_pendingAngleDeg as-is so a later SetAngleDeg() can re-trigger
   }
 }
 
@@ -142,4 +158,36 @@ void Intake::Periodic() {
     ApplyAngleSetpoint_();
   }
   PublishTelemetry_();
+}
+
+frc2::CommandPtr Intake::ToggleAngleCmd() {
+  return frc2::cmd::RunOnce([this] {
+    const double curDeg = GetAngleDeg();
+
+    const double stow   = constants::Intake::kStowDeg;
+    const double intake = constants::Intake::kIntakeDeg;
+
+    const double dStow   = std::abs(curDeg - stow);
+    const double dIntake = std::abs(curDeg - intake);
+
+    // Determine which target is CLOSEST to current angle
+    const bool stowIsClosest = (dStow <= dIntake);
+
+    // If we are already "near" one of them, that one counts as the closest
+    // (prevents tiny noise from flipping during the press)
+    double targetDeg = 0.0;
+    if (dStow <= constants::Intake::kAngleNearToleranceDeg && dIntake > constants::Intake::kAngleNearToleranceDeg) {
+      // Near stow -> go to opposite: intake
+      targetDeg = intake;
+    } else if (dIntake <= constants::Intake::kAngleNearToleranceDeg && dStow > constants::Intake::kAngleNearToleranceDeg) {
+      // Near intake -> go to opposite: stow
+      targetDeg = stow;
+    } else {
+      // Not clearly near either (or near both) -> choose opposite of the closest
+      targetDeg = stowIsClosest ? intake : stow;
+    }
+
+    // Safe: SetAngleDeg() only applies if homed; otherwise it will start homing and queue this setpoint
+    SetAngleDeg(targetDeg);
+  });
 }

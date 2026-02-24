@@ -94,6 +94,19 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
   }
 
   UpdateNetTable();
+
+  
+  // Subscribe to operator-entered fields (Elastic widgets write to these)
+  // Paths will be "/Shooter/CmdHoodDeg" and "/Shooter/CmdRPM"
+  m_cmdHoodDegSub = ShooterNetTable->GetDoubleTopic("CmdHoodDeg")
+                        .Subscribe(0.0, nt::PubSubOptions{.periodic = 0.02});
+  m_cmdRpmSub     = ShooterNetTable->GetDoubleTopic("CmdRPM")
+                        .Subscribe(0.0, nt::PubSubOptions{.periodic = 0.02});
+
+  // Seed defaults so Elastic shows the fields immediately
+  ShooterNetTable->GetEntry("CmdHoodDeg").SetDouble(0.0);
+  ShooterNetTable->GetEntry("CmdRPM").SetDouble(0.0);
+
 }
 
 // ---- Commands (flywheel RPM retained) ----
@@ -221,6 +234,7 @@ void Shooter::UpdateNetTable() {
   ShooterNetTable->PutNumber("BusVoltage", m_shooterMotor.GetBusVoltage());
   ShooterNetTable->PutNumber("OutputCurrent", m_shooterMotor.GetOutputCurrent());
   ShooterNetTable->PutNumber("MotorTempC", m_shooterMotor.GetMotorTemperature());
+  ShooterNetTable->PutNumber("MetersToHubGoal", MetersToHubGoal());
 
   // Faults/Warnings
   auto faults       = m_shooterMotor.GetFaults();
@@ -247,6 +261,18 @@ units::meter_t Shooter::MetersToTarget (frc::Translation2d& targetXY){
   const frc::Pose2d robotPose = m_drive.getPose();
   const units::meter_t dist = robotPose.Translation().Distance(targetXY);
   return dist;  // meters
+}
+
+double Shooter::MetersToHubGoal (){
+  frc::Translation2d allianceHubCoords;
+  const auto alliance = frc::DriverStation::GetAlliance();
+  if (alliance && alliance.value() == frc::DriverStation::Alliance::kRed) {
+    allianceHubCoords = constants::Field::kRedHubCoord;
+    } else {
+      allianceHubCoords = constants::Field::kBlueHubCoord;
+      }
+  const units::meter_t hubdist = MetersToTarget(allianceHubCoords);
+  return hubdist.value();  // meters
 }
 
 frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
@@ -276,5 +302,39 @@ Shooter::ShotParams Shooter::DistToShotParams(units::meter_t shootdist) const {
   shot.deg = {0.00};
   shot.rpm = {0.00};
   return shot;
+}
+
+frc2::CommandPtr Shooter::ApplyNtShotWhileHeldCmd() {
+  return frc2::cmd::RunEnd(
+    // run: follow Elastic every cycle (~20 ms by default)
+    [this] {
+      const double reqDeg = ClampHoodDeg(m_cmdHoodDegSub.Get());
+      const double reqRpm = ClampRpm(m_cmdRpmSub.Get());
+      this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
+      this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
+    },
+    // end: when the button is released or command is interrupted
+    [this] {
+      this->SetHoodDeg(0.0);  // park hood at 0°
+      this->Stop();           // clears target, zero output
+    },
+    {this}
+  );
+}
+
+double Shooter::ClampRpm(double rpmClamp) {
+  constexpr double kMin = 0.0;
+  constexpr double kMax = 6784.0; // free speed of neo vortex
+  if (rpmClamp < kMin) return kMin;
+  if (rpmClamp > kMax) return kMax;
+  return rpmClamp;
+}
+
+double Shooter::ClampHoodDeg(double degClamp) {
+  constexpr double kMinDeg = 0.0;   // set to your mechanical min
+  constexpr double kMaxDeg = 40.0;  // set to your mechanical max
+  if (degClamp < kMinDeg) return kMinDeg;
+  if (degClamp > kMaxDeg) return kMaxDeg;
+  return degClamp;
 }
 

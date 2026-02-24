@@ -58,26 +58,13 @@ void RobotContainer::ConfigureBindings() {
         ).ToPtr()
     ); // also valid: m_driverController.B().WhileTrue(m_drivetrain.cmdSetXStance());
 
+
   // POV Up: Zero gyro (wrap InstantCommand with .ToPtr() to satisfy OnTrue()) 
   m_driverController.POV(0).OnTrue(
       frc2::InstantCommand([this]{
         m_drivetrain.ZeroGyro();
-        //m_driverController.GetHID().SetRumble(frc::GenericHID::RumbleType::kBothRumble, 1.0);
       }, {&m_drivetrain}).ToPtr());
 
-  //run shooter, simple given speed to test
-  m_driverController.A().WhileTrue(m_shooter.SetRPMCommand(5000.0));
-  m_driverController.A().OnFalse(m_shooter.StopCommand());
-
-  m_buttons.Button(8).OnTrue(m_shooter.SetHoodDegCommand(20.0));
-  m_buttons.Button(7).OnTrue(m_shooter.SetHoodDegCommand(10.0));
-  m_buttons.Button(9).OnTrue(m_shooter.SetHoodDegCommand(30.0));
-
-  //calculate shot and spin up shooter
-  m_driverController.RightBumper().WhileTrue(
-    m_shooter.CalcAndSetShotCmd()
-  );
-  
   //aim robot at alliance Hub
   m_driverController.RightStick().WhileTrue(
       m_drivetrain.cmdAimAtHub(
@@ -86,41 +73,41 @@ void RobotContainer::ConfigureBindings() {
         constants::RobotConst::kSchedulerTiming)
     );
 
-  //test elevator
-  //m_buttons.Button(1).OnTrue(m_elevator.SpinDownTestCmd(0.2,units::time::second_t {1.0}));
-  //m_buttons.Button(2).OnTrue(m_elevator.SpinUpTestCmd(0.2,units::time::second_t {1.0}));
+  
 
-  //run elevator
-  m_buttons.Button(1).OnTrue(m_elevator.HomeCmd());
-  m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.02}));
-  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kMaxHeight));
+  // Elevator Low
+  m_buttons.Button(1).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.00}));
 
-  //
+  //Elevator High
+  m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kMaxHeight));
 
-  // Wheels RPM presets
-  m_buttons.Button(5).WhileTrue(
-    frc2::cmd::StartEnd(
+  //Elevator Climb
+  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kClimbHeight));
+
+  //Intake In
+  m_buttons.Button(5).WhileTrue(frc2::cmd::StartEnd(
       [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeRPM); },
       [this]{ m_intake.StopWheels(); },
       {&m_intake}
-    )
-  );
-  m_buttons.Button(11).WhileTrue(
-    frc2::cmd::StartEnd(
+    ));
+
+  //Intake Out
+  m_buttons.Button(6).WhileTrue(frc2::cmd::StartEnd(
       [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kOuttakeRPM); },
       [this]{ m_intake.StopWheels(); },
       {&m_intake}
-    )
-  );
+    ));
+  
+  //Index Shoot
+  m_buttons.Button(8).WhileTrue(m_indexer.RunSetCmd());
 
-  // Homing and a preset angle
-  m_buttons.Button(11).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.StartHoming(); }, {&m_intake}).IgnoringDisable(true));
-  m_buttons.Button(11).OnTrue(frc2::cmd::RunOnce([this]{ m_intake.SetAngleDeg(constants::Intake::kIntakeDeg); }, {&m_intake}));
+  //Index Rev
+  m_buttons.Button(8).WhileTrue(m_indexer.ReverseSetCmd());
 
-  // Example bindings (while-held to run, release to stop)
-  m_buttons.Button(6)
-    .WhileTrue(m_indexer.RunSetCmd())
-    .OnFalse(m_indexer.StopCmd());
+  //run shooter from nettable
+  m_buttons.Button(10).WhileTrue(m_shooter.ApplyNtShotWhileHeldCmd());
+
+  
 
 }
 
