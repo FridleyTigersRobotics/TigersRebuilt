@@ -237,7 +237,7 @@ namespace Intake {
     inline constexpr double kWheelsD       = 0.0;
     inline constexpr double kWheelsFF_kS   = 0.0;      // add only if needed
     inline constexpr double kWheelsFF_kV   = 12.0 / 1733.0; // ≈ 0.0069 V/RPM
-    inline constexpr double kIntakeRPM     = -1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead
+    inline constexpr double kIntakeRPM     = -1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead !!!FIXME!!!
     inline constexpr double kOuttakeRPM    = 1500.0;
     inline constexpr double kMechRPMperMotorRPM = 1.0 / 3.0;
 
@@ -247,7 +247,7 @@ namespace Intake {
     inline constexpr double kAngleD = 0.0;
     inline constexpr double kAngleFF_kS = 0.0;       // usually 0
     inline constexpr double kAngleFF_kV = 0.0;       // usually 0
-    inline constexpr double kDegPerMotorRot = 7.5;  // Example; compute from gear ratio and linkage
+    inline constexpr double kDegPerMotorRot = 7.5;  // Example; compute from gear ratio and linkage !!!FIXME!!!
 
     inline constexpr double kIntakeSpeed = 5500.00;
 
@@ -255,7 +255,7 @@ namespace Intake {
     // Geometry conversion:
     // If 120° pivot travel corresponds to 24 motor rotations:
     //   rotations/deg = 24 / 120 = 0.20
-    inline constexpr double kRotationsPerDegree = 2.69;  // [motor rotations] per [mechanism degree]
+    inline constexpr double kRotationsPerDegree = 2.69;  // [motor rotations] per [mechanism degree] !!!FIXME!!!
 
     // Useful preset angles (degrees) — optional
     inline constexpr double kStowDeg       = 0.0;
@@ -278,7 +278,7 @@ namespace Intake {
 namespace Indexer {
     inline constexpr int kLowerMotorCanID = 28;
     inline constexpr int kUpperMotorCanId = 29;
-    inline constexpr double kRunPercent = 0.90;
+    inline constexpr double kRunPercent = 1.00; //0.90
     inline constexpr double kUpperLowerRatio = 1.00;
     inline constexpr bool kLowerInverted = false;
     inline constexpr bool kUpperInverted = false;
