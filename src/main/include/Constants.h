@@ -114,7 +114,7 @@ namespace Shooter {
   // ---- Closed-loop (Spark MAX velocity) ----
   // PID (duty-cycle based loop on controller; units scale with your velocity units)
   inline constexpr double kPID_P  = 0.00010;   // Vortex + 3x 4" Colsons, 1:1
-  inline constexpr double kPID_I  = 0.0;       // add later only if needed
+  inline constexpr double kPID_I  = 0.000001;       // add later only if needed
   inline constexpr double kPID_D  = 0.00010;   // small damping to reduce overshoot
 
   // Feedforward (Spark expects these FF units by default)
