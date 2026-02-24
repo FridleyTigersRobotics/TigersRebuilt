@@ -110,7 +110,7 @@ void RobotContainer::ConfigureBindings() {
   //run shooter from nettable
   m_buttons.Button(10).WhileTrue(m_shooter.ApplyNtShotWhileHeldCmd());
 
-  m_driverController.A().WhileTrue(m_shooter.SetRPMCommand(3000.0));
+  m_driverController.A().WhileTrue(m_shooter.SetHoodDegCommand(20.0));
 
   
 
