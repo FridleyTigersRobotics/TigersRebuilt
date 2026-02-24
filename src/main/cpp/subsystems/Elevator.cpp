@@ -122,6 +122,14 @@ void Elevator::ApplyPositionReferences() {
   if (skew_m > c::kSkewFault) {
     Stop();
     ElevatorNetTable->PutBoolean("SkewFault", true);
+    
+    // Make the system "unhomed" so next SetHeightCmd() will home first
+    m_leftHomed  = false;
+    m_rightHomed = false;
+
+    // Also clear any active target so we don't try to hold a setpoint while unhomed
+    m_hasTarget = false;
+
     return;
   } else {
     ElevatorNetTable->PutBoolean("SkewFault", false);
