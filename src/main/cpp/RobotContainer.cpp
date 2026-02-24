@@ -84,6 +84,9 @@ void RobotContainer::ConfigureBindings() {
   //Elevator Climb
   m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kClimbHeight));
 
+  //Intake Deploy/Stow
+  m_buttons.Button(4).OnTrue(m_intake.ToggleAngleCmd());
+
   //Intake In
   m_buttons.Button(5).WhileTrue(frc2::cmd::StartEnd(
       [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeRPM); },
@@ -102,7 +105,7 @@ void RobotContainer::ConfigureBindings() {
   m_buttons.Button(8).WhileTrue(m_indexer.RunSetCmd());
 
   //Index Rev
-  m_buttons.Button(8).WhileTrue(m_indexer.ReverseSetCmd());
+  m_buttons.Button(9).WhileTrue(m_indexer.ReverseSetCmd());
 
   //run shooter from nettable
   m_buttons.Button(10).WhileTrue(m_shooter.ApplyNtShotWhileHeldCmd());
