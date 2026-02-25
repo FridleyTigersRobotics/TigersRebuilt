@@ -112,6 +112,12 @@ void RobotContainer::ConfigureBindings() {
 
   m_buttons.Button(7).OnTrue(m_elevator.HomeCmd());
 
+  m_driverController.Y().OnTrue(frc2::cmd::StartEnd(
+      [this]{ m_drivetrain.Drive(0_mps, 0_mps, +1_rad_per_s, false, 1000_ms);},
+      [this]{ m_drivetrain.Drive(0_mps, 0_mps, 0_rad_per_s, false, 20_ms); },
+      {&m_drivetrain}
+    ));
+
 }
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {

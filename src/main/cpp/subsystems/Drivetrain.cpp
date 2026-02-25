@@ -78,11 +78,17 @@ void Drivetrain::Drive(units::meters_per_second_t xSpeed,
                        units::radians_per_second_t rot,
                        bool fieldRelative,
                        units::second_t period) {
+  // Field heading used only for field-relative; your accessor already inverts once consistently
   const auto headingForField =
       fieldRelative ? GetGyroRotation() : frc::Rotation2d{0_rad};
+
+  // ---- Global convention fix: +rot should spin the robot CCW physically ----
+  const auto rotCCW = -rot;  // single-point sign flip for angular rate
+
+  // Build chassis speeds (field-relative or robot-relative), then discretize
   const auto chassis = fieldRelative
-    ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(xSpeed, ySpeed, rot, headingForField)
-    : frc::ChassisSpeeds{xSpeed, ySpeed, rot};
+      ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(xSpeed, ySpeed, rotCCW, headingForField)
+      : frc::ChassisSpeeds{xSpeed, ySpeed, rotCCW};
 
   auto states = m_kinematics.ToSwerveModuleStates(
       frc::ChassisSpeeds::Discretize(chassis, period));
@@ -100,9 +106,9 @@ void Drivetrain::DriveFromXbox(const frc::XboxController& controller,
                                units::second_t period,
                                double deadband) {
   // WPILib Y is inverted; invert so up is +forward
-  const double rawX   = controller.GetLeftY();
-  const double rawY   = controller.GetLeftX();
-  const double rawRot = controller.GetRightX();
+  const double rawX   = -controller.GetLeftY();
+  const double rawY   = -controller.GetLeftX();
+  const double rawRot = -controller.GetRightX();
 
   const double shapedX   = ShapeInput(rawX,   deadband);
   const double shapedY   = ShapeInput(rawY,   deadband);
@@ -130,8 +136,8 @@ void Drivetrain::DriveFromXboxAim(const frc::XboxController& controller,
                                   const frc::Translation2d& targetXY) {
   // ----------------- Translation from left stick (unchanged) -----------------
   // WPILib Y is inverted; invert so up is +forward
-  const double rawX = controller.GetLeftY();
-  const double rawY = controller.GetLeftX();
+  const double rawX = -controller.GetLeftY();
+  const double rawY = -controller.GetLeftX();
 
   const double shapedX = ShapeInput(rawX, deadband);
   const double shapedY = ShapeInput(rawY, deadband);
