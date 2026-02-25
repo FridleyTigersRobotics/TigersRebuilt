@@ -96,4 +96,6 @@ class Shooter : public frc2::SubsystemBase {
   static double ClampRpm(double rpmClamp);
   static double ClampHoodDeg(double degClamp);
 
+  static constexpr double kMaxRpmRatePerSec = 7000.0; // tune: 7000–9000 RPM/s typical
+
 };

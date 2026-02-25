@@ -106,24 +106,24 @@ namespace Shooter {
 
   // Electrical & safety (unchanged if you already set these)
   inline constexpr bool   kInvertMotor            = false;
-  inline constexpr int    kSmartCurrentLimit      = 40;     // A
+  inline constexpr int    kSmartCurrentLimit      = 60;     // A
   inline constexpr double kVoltageCompensation  = 12.0;   // V
-  inline constexpr double kOpenLoopRampSeconds    = 0.20;   // s
+  inline constexpr double kOpenLoopRampSeconds    = 0.05;   // s
   inline constexpr int    kSmartCurrentLimit550   = 10;
 
   // ---- Closed-loop (Spark MAX velocity) ----
   // PID (duty-cycle based loop on controller; units scale with your velocity units)
-  inline constexpr double kPID_P  = 0.00010;   // Vortex + 3x 4" Colsons, 1:1
+  inline constexpr double kPID_P  = 0.00007;   // Vortex + 3x 4" Colsons, 1:1
   inline constexpr double kPID_I  = 0.000001;       // add later only if needed
-  inline constexpr double kPID_D  = 0.00010;   // small damping to reduce overshoot
+  inline constexpr double kPID_D  = 0.00012;   // small damping to reduce overshoot
 
   // Feedforward (Spark expects these FF units by default)
   // kV ~= Volts per RPM. Ideal ≈ 12/6784 = 0.00177 V/RPM; add headroom for losses.
-  inline constexpr double kFF_kV  = 0.00195;   // good starting slope for real-world losses
+  inline constexpr double kFF_kV  = 0.00180;   // good starting slope for real-world losses
   inline constexpr double kFF_kS  = 0.20;      // static friction (~0.15–0.3 V typical)
 
   // Optional: if you plan to use acceleration feedforward
-  inline constexpr double kFF_kA  = 0.00010;   // small; tune only if you observe accel error
+  inline constexpr double kFF_kA  = 0.00000;   // small; tune only if you observe accel error
 
   //Hood Constants
   inline constexpr int    kHoodDio               = 0;       // DIO channel for hood homing switch

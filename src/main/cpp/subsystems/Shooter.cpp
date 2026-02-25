@@ -17,7 +17,7 @@ using constants::Shooter::kVoltageCompensation;
 // Feedforward (recommended for NEO Vortex direct-drive)
 using constants::Shooter::kFF_kS;
 using constants::Shooter::kFF_kV;
-// using constants::Shooter::kFF_kA;  // Uncomment if you decide to use kA
+using constants::Shooter::kFF_kA;  // Uncomment if you decide to use kA
 using constants::Shooter::kHoodDio;
 using constants::Shooter::kHoodActiveLow;
 using constants::Shooter::kHoodDegPerMotorRot;
@@ -45,7 +45,9 @@ Shooter::Shooter(Drivetrain& driveidentity) : m_drive(driveidentity) {
 
     // Flywheel closed-loop PIDF on-device (velocity in RPM)
     cfg.closedLoop.P(kPID_P).I(kPID_I).D(kPID_D);
+    cfg.closedLoop.OutputRange(-1.0,1.0).IZone(150.0); //anti-windup
     cfg.closedLoop.feedForward.kS(kFF_kS).kV(kFF_kV);
+    cfg.closedLoop.feedForward.kA(kFF_kA);
 
     m_shooterMotor.Configure(cfg,
                              rev::ResetMode::kResetSafeParameters,
@@ -115,6 +117,13 @@ frc2::CommandPtr Shooter::SetRPMCommand(double rpm) {
 }
 
 void Shooter::SetTargetRPM(double rpm) {
+  // Anti-windup: if this is a large step change, clear the integral
+  // to avoid carrying I from the previous operating point.
+  // Keep this band in sync with your closedLoop.IZone() (150 RPM).
+  if (m_targetRPM && std::fabs(*m_targetRPM - rpm) > 150.0) {
+    m_cl.SetIAccum(0.0);
+  }
+
   m_targetRPM = rpm;
 }
 
@@ -166,22 +175,52 @@ bool Shooter::AtSpeed(double tolRpm) const {
   return std::abs(*m_targetRPM - m_lastMeasuredRPM) <= tolRpm;
 }
 
-// ---- Periodic ----
 void Shooter::Periodic() {
-  // --- Shooter flywheel (Spark on-device velocity loop) ---
+  // ===== Shooter flywheel (Spark on-device velocity loop) =====
+  // Setpoint slew-rate limiter to reduce current spikes / breaker trips.
+  // We ramp the *commanded* setpoint toward m_targetRPM at a bounded rate.
+  constexpr double kLoopDtSec = 0.02;           // scheduler period ~20 ms
+  constexpr double kMaxRpmRatePerSec = 8000.0;  // tune 7000–9000 RPM/s typical
+  const double maxStep = kMaxRpmRatePerSec * kLoopDtSec;
+
+  // Keep a persistent ramped setpoint without adding members (static retains value between calls)
+  static double s_rampedSetpointRPM = 0.0;
+
   if (m_targetRPM.has_value()) {
-    m_cl.SetSetpoint(*m_targetRPM, rev::spark::SparkLowLevel::ControlType::kVelocity);
+    const double target = *m_targetRPM;
+    const double errToGo = target - s_rampedSetpointRPM;
+    const double step = std::clamp(errToGo, -maxStep, maxStep);
+    s_rampedSetpointRPM += step;
+
+    // Drive using the ramped setpoint
+    m_cl.SetSetpoint(s_rampedSetpointRPM, rev::spark::SparkLowLevel::ControlType::kVelocity);
   } else {
     m_shooterMotor.Set(0.0);
+    s_rampedSetpointRPM = 0.0;  // reset ramp when idle
   }
 
   // Telemetry
-  m_lastMeasuredRPM   = m_encoder.GetVelocity();  // RPM
+  m_lastMeasuredRPM   = m_encoder.GetVelocity();         // RPM
   m_lastAppliedOutput = m_shooterMotor.GetAppliedOutput();
 
-  // --- Hood homing + Spark Position control ---
-  auto enc = m_hoodMotor.GetEncoder();  // degrees due to conversion factor
+  // ----- Anti-windup guard rails -----
+  // If we're far from setpoint (outside IZone) or the controller is saturated
+  // and still pushing in the error direction, clear the integral accumulator.
+  if (m_targetRPM.has_value()) {
+    const double err = *m_targetRPM - m_lastMeasuredRPM;
 
+    // Keep this band in sync with your closedLoop.IZone() in the config.
+    constexpr double kIEnableBandRPM = 300.0;  // e.g., 300; use 150 if you tightened IZone
+    const bool saturated = std::fabs(m_lastAppliedOutput) >= 0.98;
+    const bool sameSign  = (err * m_lastAppliedOutput) > 0.0; // pushing same direction as error
+
+    if (std::fabs(err) > kIEnableBandRPM || (saturated && sameSign)) {
+      m_cl.SetIAccum(0.0);  // reset integral on the device
+    }
+  }
+
+  // ===== Hood homing + Spark Position control (unchanged) =====
+  auto enc = m_hoodMotor.GetEncoder(); // degrees due to conversion factor
   switch (gHoodState) {
     case HoodState::kIdle:
       // If you want to delay homing, keep idle; default is kHoming at boot
@@ -194,8 +233,7 @@ void Shooter::Periodic() {
       if (pressed) {
         // Stop and zero at home
         m_hoodMotor.Set(0.0);
-        (void)enc.SetPosition(0.0);  // zero hood at home (degrees)
-
+        (void)enc.SetPosition(0.0); // zero hood at home (degrees)
         gHoodState = HoodState::kHomed;
 
         // If a pending setpoint was queued before homing, apply it now
