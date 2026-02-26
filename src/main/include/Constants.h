@@ -190,7 +190,7 @@ namespace Elevator {
     inline constexpr double kFF = 0.0;
 
     // Limits
-    inline constexpr int kSmartCurrentLimit = 30;
+    inline constexpr int kSmartCurrentLimit = 60; //increase for NEOs
     inline constexpr bool kInvertMotor = true;
     inline constexpr double kVoltageCompensation = 12.0;
 
