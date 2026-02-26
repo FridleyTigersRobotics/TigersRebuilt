@@ -69,14 +69,14 @@ inline constexpr std::string_view kCameraName{"Arducam_OV9281_USB_Camera_001"};
 //   - Camera pitched DOWN by 30 degrees       (  pitch = -30° )
 inline const frc::Transform3d kRobotToCam{
     frc::Translation3d{
-        0.075_m,   // +X forward from robot center
-        0.280_m,   // +Y left  (use negative for right)
-        0.080_m    // +Z up
+        0.030_m,   // +X forward from robot center
+        0.008_m,   // +Y left  (use negative for right)
+        0.050_m    // +Z up
     },
     frc::Rotation3d{
         0_rad,     // roll
         30_deg,    // pitch (DOWN is negative)
-        0_rad      // yaw   (LEFT is positive, RIGHT is negative), 0_rad, units::radian_t{std::numbers::pi}
+        0.08727_rad      // yaw   (LEFT is positive, RIGHT is negative), 0_rad, units::radian_t{std::numbers::pi}
     }
 };
 
