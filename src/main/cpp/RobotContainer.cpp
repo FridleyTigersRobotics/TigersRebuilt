@@ -108,7 +108,7 @@ void RobotContainer::ConfigureBindings() {
   m_buttons.Button(9).WhileTrue(m_indexer.ReverseSetCmd());
 
   //run shooter from nettable
-  m_buttons.Button(10).WhileTrue(m_shooter.ApplyNtShotWhileHeldCmd());
+  m_buttons.Button(10).WhileTrue(m_shooter.CalcAndSetShotCmd());
 
   m_buttons.Button(7).OnTrue(m_elevator.HomeCmd());
 

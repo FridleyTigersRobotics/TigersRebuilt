@@ -336,9 +336,32 @@ frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
 }
 
 Shooter::ShotParams Shooter::DistToShotParams(units::meter_t shootdist) const {
+  // === Limits ===
+  constexpr double kMinAngleDeg = 0.0;
+  constexpr double kMaxAngleDeg = 60.0;
+  constexpr double kMinRPM      = 2000.0;
+  constexpr double kMaxRPM      = 5000.0;
+  
   Shooter::ShotParams shot;
+  double distance_m=shootdist.value();
   shot.deg = {0.00};
   shot.rpm = {0.00};
+  
+  double angle = 5.3597426826 * distance_m + 3.7063057550;
+  if (angle < kMinAngleDeg) angle = kMinAngleDeg;
+  if (angle > kMaxAngleDeg) angle = kMaxAngleDeg;
+
+  // RPM: linear model + clamp
+  double rpm = 20.7592471832 * distance_m + 3218.5162113353;
+
+  // If you prefer steadier behavior, replace with a constant like:
+  // double rpm = 3250.0;
+
+  if (rpm < kMinRPM) rpm = kMinRPM;
+  if (rpm > kMaxRPM) rpm = kMaxRPM;
+
+  shot.deg = angle;
+  shot.rpm = rpm;
   return shot;
 }
 
