@@ -35,7 +35,8 @@ class Shooter : public frc2::SubsystemBase {
     // While-held command: follow Elastic fields (CmdHoodDeg/CmdRPM); on release, zero & stop
   frc2::CommandPtr ApplyNtShotWhileHeldCmd();
 
-  frc2::CommandPtr PassCmd();
+  frc2::CommandPtr PassShortCmd();
+  frc2::CommandPtr PassFarCmd();
 
   // Helpers
   bool AtSpeed(double tolRpm = 100.0) const;

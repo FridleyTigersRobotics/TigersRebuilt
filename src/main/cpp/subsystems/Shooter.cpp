@@ -337,8 +337,8 @@ frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
 
 Shooter::ShotParams Shooter::DistToShotParams(units::meter_t shootdist) const {
   // === Limits ===
-  constexpr double kMinAngleDeg = 0.0;
-  constexpr double kMaxAngleDeg = 60.0;
+  constexpr double kMinAngleDeg = constants::Shooter::kMinAngleDeg;
+  constexpr double kMaxAngleDeg = constants::Shooter::kMaxAngleDeg;
   constexpr double kMinRPM      = 2000.0;
   constexpr double kMaxRPM      = 5000.0;
   
@@ -392,19 +392,37 @@ double Shooter::ClampRpm(double rpmClamp) {
 }
 
 double Shooter::ClampHoodDeg(double degClamp) {
-  constexpr double kMinDeg = 0.0;   // set to your mechanical min
-  constexpr double kMaxDeg = 40.0;  // set to your mechanical max
+  constexpr double kMinDeg = constants::Shooter::kMinAngleDeg;   // set to your mechanical min
+  constexpr double kMaxDeg = constants::Shooter::kMaxAngleDeg;  // set to your mechanical max
   if (degClamp < kMinDeg) return kMinDeg;
   if (degClamp > kMaxDeg) return kMaxDeg;
   return degClamp;
 }
 
 
-frc2::CommandPtr Shooter::PassCmd() {
+frc2::CommandPtr Shooter::PassFarCmd() {
   return frc2::cmd::RunEnd(
     [this] {
       const double reqDeg = ClampHoodDeg(40.0);
-      const double reqRpm = ClampRpm(3000.0);
+      const double reqRpm = ClampRpm(4000.0);
+      this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
+      this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
+    },
+    // end: when the button is released or command is interrupted
+    [this] {
+      this->SetHoodDeg(0.0);  // park hood at 0°
+      this->Stop();           // clears target, zero output
+    },
+    {this}
+  );
+}
+
+
+frc2::CommandPtr Shooter::PassShortCmd() {
+  return frc2::cmd::RunEnd(
+    [this] {
+      const double reqDeg = ClampHoodDeg(40.0);
+      const double reqRpm = ClampRpm(2000.0);
       this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
       this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
     },

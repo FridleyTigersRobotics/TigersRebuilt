@@ -108,10 +108,10 @@ rtHeld.WhileTrue(
 
 
   //Intake In
-  m_buttons.Button(5).WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
+  m_buttons.Button(5).WhileTrue(m_shooter.PassShortCmd());
 
   //pass ball
-  m_buttons.Button(6).WhileTrue(m_shooter.PassCmd());
+  m_buttons.Button(6).WhileTrue(m_shooter.PassFarCmd());
 
     //Intake In
   m_driverController.A().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
