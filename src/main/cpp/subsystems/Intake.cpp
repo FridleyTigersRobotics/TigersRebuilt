@@ -177,14 +177,14 @@ frc2::CommandPtr Intake::ToggleAngleCmd() {
     // (prevents tiny noise from flipping during the press)
     double targetDeg = 0.0;
     if (dStow <= constants::Intake::kAngleNearToleranceDeg && dIntake > constants::Intake::kAngleNearToleranceDeg) {
-      // Near stow -> go to opposite: intake
-      targetDeg = intake;
-    } else if (dIntake <= constants::Intake::kAngleNearToleranceDeg && dStow > constants::Intake::kAngleNearToleranceDeg) {
-      // Near intake -> go to opposite: stow
+      // Near stow -> go to stow: stow
       targetDeg = stow;
+    } else if (dIntake <= constants::Intake::kAngleNearToleranceDeg && dStow > constants::Intake::kAngleNearToleranceDeg) {
+      // Near intake -> go to intake: intake
+      targetDeg = intake;
     } else {
       // Not clearly near either (or near both) -> choose opposite of the closest
-      targetDeg = stowIsClosest ? intake : stow;
+      targetDeg = stowIsClosest ? stow : intake;
     }
 
     // Safe: SetAngleDeg() only applies if homed; otherwise it will start homing and queue this setpoint
