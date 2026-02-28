@@ -11,6 +11,7 @@
 #include <rev/config/SparkBaseConfig.h>
 #include <networktables/NetworkTable.h>
 #include <networktables/NetworkTableInstance.h>
+#include <frc/XboxController.h>
 
 #include <units/angle.h>
 #include <units/time.h>
@@ -41,6 +42,14 @@ class Intake : public frc2::SubsystemBase {
   void EnableTelemetry(bool enable) { m_publishTelemetry = enable; }
 
   frc2::CommandPtr ToggleAngleCmd();
+  frc2::CommandPtr AngleStowCmd();
+  frc2::CommandPtr AngleIntakeCmd();
+  frc2::CommandPtr AngleFromTriggerSupplierWhileHeldCmd(std::function<double()> triggerSupplier);
+  
+  // Run wheels at a fixed percent [-1, 1] while scheduled; stop on end.
+  frc2::CommandPtr WheelsPercentCmd(double percent);
+
+
 
   void Periodic() override;
 

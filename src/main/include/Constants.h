@@ -240,6 +240,8 @@ namespace Intake {
     inline constexpr double kIntakeRPM     = -1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead !!!FIXME!!!
     inline constexpr double kOuttakeRPM    = 1500.0;
     inline constexpr double kMechRPMperMotorRPM = 1.0 / 3.0;
+    inline constexpr double kOpenLoopIntake = -1.0;
+    inline constexpr double kOpenLoopOuttake = 1.0;
 
     // Angle position loop
     inline constexpr double kAngleP = 0.25;
@@ -250,6 +252,11 @@ namespace Intake {
     inline constexpr double kDegPerMotorRot = 7.5;  // Example; compute from gear ratio and linkage !!!FIXME!!!
 
     inline constexpr double kIntakeSpeed = 5500.00;
+
+    inline constexpr double kTriggerDeadband = 0.05;
+    inline constexpr double kTriggerMin = 0.0;
+    inline constexpr double kTriggerMax = 1.0;
+
 
 
     // Geometry conversion:

@@ -191,3 +191,45 @@ frc2::CommandPtr Intake::ToggleAngleCmd() {
     SetAngleDeg(targetDeg);
   });
 }
+
+frc2::CommandPtr Intake::AngleStowCmd() {
+  return frc2::cmd::RunOnce([this] {
+    // Safe: SetAngleDeg() only applies if homed; otherwise it will start homing and queue this setpoint
+    SetAngleDeg(constants::Intake::kStowDeg);
+  });
+}
+
+frc2::CommandPtr Intake::AngleIntakeCmd() {
+  return frc2::cmd::RunOnce([this] {
+    // Safe: SetAngleDeg() only applies if homed; otherwise it will start homing and queue this setpoint
+    SetAngleDeg(constants::Intake::kIntakeDeg);
+  });
+}
+
+// Map right trigger 0..1 to angle kStowDeg..kIntakeDeg.
+// Runs only while scheduled; on release, command ends so others can take control.
+frc2::CommandPtr Intake::AngleFromTriggerSupplierWhileHeldCmd(std::function<double()> get) {
+  return frc2::cmd::Run([this, get] {
+    double raw = get();  // expected 0..1
+    double t = (std::abs(raw) < constants::Intake::kTriggerDeadband) ? 0.0 : raw;
+    t = std::clamp(t, constants::Intake::kTriggerMin, constants::Intake::kTriggerMax);
+    const double cmdDeg = constants::Intake::kStowDeg + t * (constants::Intake::kIntakeDeg - constants::Intake::kStowDeg);
+    // Uses your existing safety/homing path
+    SetAngleDeg(cmdDeg);
+  }).WithName("IntakeAngleFromTriggerSupplierWhileHeld");
+}
+
+frc2::CommandPtr Intake::WheelsPercentCmd(double percent) {
+  const double duty = std::clamp(percent, -1.0, 1.0);
+
+  return frc2::cmd::RunEnd(
+    // RUN — set percent output
+    [this, duty] {
+      m_wheels.Set(duty);
+    },
+
+    // END — stop wheels when command ends
+    [this] { this -> m_wheels.Set(0.0); }
+
+  ).WithName("IntakeWheelsPercentCmd");
+}

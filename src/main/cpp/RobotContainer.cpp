@@ -87,19 +87,37 @@ void RobotContainer::ConfigureBindings() {
   //Intake Deploy/Stow
   m_buttons.Button(4).OnTrue(m_intake.ToggleAngleCmd());
 
+  //Intake Stow
+  m_driverController.LeftBumper().OnTrue(m_intake.AngleStowCmd());
+
+  //Intake Intake
+  m_driverController.RightBumper().OnTrue(m_intake.AngleIntakeCmd());
+
+  // RobotContainer.cpp
+
+// Condition for "right trigger is held beyond deadband"
+frc2::Trigger rtHeld{[this] {
+  return m_driverController.GetRightTriggerAxis() > constants::Intake::kTriggerDeadband;
+}};
+// While true, run the mapping command; on release, it ends.
+rtHeld.WhileTrue(
+  m_intake.AngleFromTriggerSupplierWhileHeldCmd(
+    [this]{ return m_driverController.GetRightTriggerAxis(); }
+  )
+);
+
+
   //Intake In
-  m_buttons.Button(5).WhileTrue(frc2::cmd::StartEnd(
-      [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kIntakeRPM); },
-      [this]{ m_intake.StopWheels(); },
-      {&m_intake}
-    ));
+  m_buttons.Button(5).WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
+
+  //pass ball
+  m_buttons.Button(6).WhileTrue(m_shooter.PassCmd());
+
+    //Intake In
+  m_driverController.A().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
 
   //Intake Out
-  m_buttons.Button(6).WhileTrue(frc2::cmd::StartEnd(
-      [this]{ m_intake.SetWheelsSpeedRPM(constants::Intake::kOuttakeRPM); },
-      [this]{ m_intake.StopWheels(); },
-      {&m_intake}
-    ));
+  m_driverController.X().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopOuttake));
   
   //Index Shoot
   m_buttons.Button(8).WhileTrue(m_indexer.RunSetCmd());
@@ -108,9 +126,9 @@ void RobotContainer::ConfigureBindings() {
   m_buttons.Button(9).WhileTrue(m_indexer.ReverseSetCmd());
 
   //run shooter from nettable
-  m_buttons.Button(10).WhileTrue(m_shooter.CalcAndSetShotCmd());
+  m_buttons.Button(7).WhileTrue(m_shooter.CalcAndSetShotCmd());
 
-  m_buttons.Button(7).OnTrue(m_elevator.HomeCmd());
+  m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
 
 }
 
