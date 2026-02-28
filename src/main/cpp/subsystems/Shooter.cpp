@@ -434,3 +434,20 @@ frc2::CommandPtr Shooter::PassShortCmd() {
     {this}
   );
 }
+
+frc2::CommandPtr Shooter::PassMidCmd() {
+  return frc2::cmd::RunEnd(
+    [this] {
+      const double reqDeg = ClampHoodDeg(40.0);
+      const double reqRpm = ClampRpm(3000.0);
+      this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
+      this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
+    },
+    // end: when the button is released or command is interrupted
+    [this] {
+      this->SetHoodDeg(0.0);  // park hood at 0°
+      this->Stop();           // clears target, zero output
+    },
+    {this}
+  );
+}

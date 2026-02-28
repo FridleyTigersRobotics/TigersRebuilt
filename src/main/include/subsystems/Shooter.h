@@ -37,6 +37,8 @@ class Shooter : public frc2::SubsystemBase {
 
   frc2::CommandPtr PassShortCmd();
   frc2::CommandPtr PassFarCmd();
+  frc2::CommandPtr PassMidCmd();
+
 
   // Helpers
   bool AtSpeed(double tolRpm = 100.0) const;

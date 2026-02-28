@@ -84,10 +84,7 @@ void RobotContainer::ConfigureBindings() {
   //Elevator Climb
   m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kMaxHeight));
 
-  //Intake Deploy/Stow
-  m_buttons.Button(4).OnTrue(m_intake.ToggleAngleCmd());
-
-  //Intake Stow
+    //Intake Stow
   m_driverController.X().OnTrue(m_intake.AngleStowCmd());
 
   //Intake Intake
@@ -107,10 +104,8 @@ rtHeld.WhileTrue(
 );
 
 
-  //Intake In
-  m_buttons.Button(5).WhileTrue(m_shooter.PassShortCmd());
-
-  //pass ball
+  m_buttons.Button(4).WhileTrue(m_shooter.PassShortCmd());
+  m_buttons.Button(5).OnTrue(m_shooter.PassMidCmd());
   m_buttons.Button(6).WhileTrue(m_shooter.PassFarCmd());
 
     //Intake In
