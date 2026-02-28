@@ -260,6 +260,10 @@ namespace Intake {
     inline constexpr double kTriggerMin = 0.0;
     inline constexpr double kTriggerMax = 1.0;
 
+    // Max angle slew rate (degrees per second). Tune to taste (e.g., 90.0 = 1/4 turn per second if 360°)
+    inline constexpr double kAngleMaxDegPerSec = 45.0;
+
+
 
 
     // Geometry conversion:

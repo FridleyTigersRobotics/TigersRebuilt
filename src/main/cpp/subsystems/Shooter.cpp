@@ -330,7 +330,9 @@ frc2::CommandPtr Shooter::CalcAndSetShotCmd() {
           this->SetTargetRPM(shot.rpm);
         },
         // end: ensure shooter is safe when command ends or is interrupted
-        [this] { this->Stop(); },
+        [this] {  this->Stop();
+                  this->SetHoodDeg(0.0);
+                },
         {this}
     );
 }

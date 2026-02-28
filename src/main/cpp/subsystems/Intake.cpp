@@ -135,8 +135,25 @@ void Intake::RunHoming_() {
 
 void Intake::ApplyAngleSetpoint_() {
   if (!m_homed || !m_angleSetpointRot.has_value()) return;
-  m_anglePID.SetSetpoint(*m_angleSetpointRot,
-                          rev::spark::SparkBase::ControlType::kPosition);
+
+  // --- Rate limit toward the final target ---
+  // Assumes robot main loop is ~20 ms. If you run a different loop, adjust periodSec.
+  constexpr double kLoopPeriodSec = constants::RobotConst::kSchedulerTiming.value()/1000;
+  const double maxStepDeg = constants::Intake::kAngleMaxDegPerSec * kLoopPeriodSec;
+  const double maxStepRot = DegToRot(maxStepDeg);
+
+  const double curRot = m_angleEnc.GetPosition();
+  const double tgtRot = *m_angleSetpointRot;
+  const double errorRot = tgtRot - curRot;
+
+  // If within one step, just go to target
+  double nextRot = tgtRot;
+  if (std::abs(errorRot) > maxStepRot) {
+    nextRot = curRot + std::copysign(maxStepRot, errorRot);
+  }
+
+  // Command the *limited* intermediate setpoint each loop
+  m_anglePID.SetSetpoint(nextRot, rev::spark::SparkBase::ControlType::kPosition);
 }
 
 void Intake::PublishTelemetry_() {
@@ -213,7 +230,7 @@ frc2::CommandPtr Intake::AngleFromTriggerSupplierWhileHeldCmd(std::function<doub
     double raw = get();  // expected 0..1
     double t = (std::abs(raw) < constants::Intake::kTriggerDeadband) ? 0.0 : raw;
     t = std::clamp(t, constants::Intake::kTriggerMin, constants::Intake::kTriggerMax);
-    const double cmdDeg = constants::Intake::kStowDeg + t * (constants::Intake::kIntakeDeg - constants::Intake::kStowDeg);
+    const double cmdDeg = constants::Intake::kIntakeDeg - t * (constants::Intake::kIntakeDeg - constants::Intake::kStowDeg);
     // Uses your existing safety/homing path
     SetAngleDeg(cmdDeg);
   }).WithName("IntakeAngleFromTriggerSupplierWhileHeld");
