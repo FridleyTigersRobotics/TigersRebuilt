@@ -79,19 +79,19 @@ void RobotContainer::ConfigureBindings() {
   m_buttons.Button(1).OnTrue(m_elevator.SetHeightCmd(units::meter_t{0.00}));
 
   //Elevator High
-  m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kMaxHeight));
+  m_buttons.Button(2).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kClimbHeight));
 
   //Elevator Climb
-  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kClimbHeight));
+  m_buttons.Button(3).OnTrue(m_elevator.SetHeightCmd(constants::Elevator::kMaxHeight));
 
   //Intake Deploy/Stow
   m_buttons.Button(4).OnTrue(m_intake.ToggleAngleCmd());
 
   //Intake Stow
-  m_driverController.LeftBumper().OnTrue(m_intake.AngleStowCmd());
+  m_driverController.X().OnTrue(m_intake.AngleStowCmd());
 
   //Intake Intake
-  m_driverController.RightBumper().OnTrue(m_intake.AngleIntakeCmd());
+  m_driverController.A().OnTrue(m_intake.AngleIntakeCmd());
 
   // RobotContainer.cpp
 
@@ -114,10 +114,10 @@ rtHeld.WhileTrue(
   m_buttons.Button(6).WhileTrue(m_shooter.PassFarCmd());
 
     //Intake In
-  m_driverController.A().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
+  m_driverController.RightBumper().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
 
   //Intake Out
-  m_driverController.X().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopOuttake));
+  m_driverController.LeftBumper().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopOuttake));
   
   //Index Shoot
   m_buttons.Button(8).WhileTrue(m_indexer.RunSetCmd());
