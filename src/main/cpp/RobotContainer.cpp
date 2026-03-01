@@ -288,7 +288,7 @@ static constexpr units::second_t     kPauseTime       = 0.50_s; // <-- how long 
 static constexpr units::second_t     kMoveTimeout     = 2.00_s; // safety: give up waiting after 2s
 static constexpr double              kAngleNearTolDeg = constants::Intake::kAngleNearToleranceDeg;
 pathplanner::NamedCommands::registerCommand(
-  "intakeflip",
+  "IntakeFlip",
   std::move(
     frc2::cmd::Sequence(
       // 1) Go to target angle (auto-homes first if needed)
@@ -314,7 +314,7 @@ pathplanner::NamedCommands::registerCommand(
         return std::abs(m_intake.GetAngleDeg() - constants::Intake::kIntakeDeg) <= kAngleNearTolDeg;
       }).WithTimeout(kMoveTimeout)
     )
-    .WithName("intakeflip")
+    .WithName("IntakeFlip")
     .IgnoringDisable(false)
   )
 );

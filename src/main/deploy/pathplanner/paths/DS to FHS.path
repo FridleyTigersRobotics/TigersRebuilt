@@ -1,0 +1,75 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 1.6942499999999998,
+        "y": 5.98505
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 0.9362571428571429,
+        "y": 5.998007142857143
+      },
+      "isLocked": false,
+      "linkedName": "DepotSet"
+    },
+    {
+      "anchor": {
+        "x": 0.9751285714285711,
+        "y": 5.98505
+      },
+      "prevControl": {
+        "x": 0.7253453031554831,
+        "y": 5.974642363821956
+      },
+      "nextControl": {
+        "x": 2.351297677105812,
+        "y": 6.042390379403212
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 2.575335714285714,
+        "y": 4.0
+      },
+      "prevControl": {
+        "x": 1.984671426455167,
+        "y": 4.0
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "FH Shoot"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.25,
+      "rotationDegrees": -179.63272439266186
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.7,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 344.0,
+    "maxAngularAcceleration": 573.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 0.0
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -179.24615166692914
+  },
+  "useDefaultConstraints": true
+}

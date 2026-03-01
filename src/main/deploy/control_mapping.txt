@@ -31,4 +31,4 @@ ElevatorRaise      — Safely raise elevator to kMaxHeight; homes first if neede
 AutoShoot          — Aim at alliance hub (time-capped), spin up shooter using CalcAndSetShotCmd and wait for AtSpeed or timeout, feed indexer for a set time, then stop indexer & shooter and park hood at 0°. Aborts immediately when autonomous ends.
 IntakeWheelsStart  — Start intake wheels (percent open-loop) and leave them running via SetWheelsPercent.
 IntakeWheelsStop   — Stop intake wheels by setting duty to 0 via SetWheelsPercent(0.0).
-intakeflip         — Move intake to target angle, pause, then return to kIntakeDeg; waits near tolerance with move timeouts.
+IntakeFlip         — Move intake to target angle, pause, then return to kIntakeDeg; waits near tolerance with move timeouts.
