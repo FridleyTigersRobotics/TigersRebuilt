@@ -1,0 +1,22 @@
+XboxController:
+Left Stick = Drive Field Oriented
+Right Stick = Rotate
+Press Right Stick = Aim at Alliance Hub
+X = Stow Intake
+A = Intake out
+Right Trigger = Intake Flipper
+Right Bumper = Intake Wheels
+Left Bumper = Outtake Wheels
+B = Defensive X Stance
+
+Buttons:
+10 = Elevator Home
+1 = Elevator Low
+2 = Elevator Climb
+3 = Elevator High
+4 = Pass Short
+5 = Pass Mid
+6 = Pass Far
+7 = Hub Shoot
+8 = Index Shoot
+9 = Index Reverse
