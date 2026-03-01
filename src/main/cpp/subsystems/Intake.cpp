@@ -7,6 +7,10 @@
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/Commands.h> 
 
+#include "subsystems/Elevator.h"   // NEW: needed for AngleStowSafedCmd
+#include <functional>              // NEW: for std::function
+
+
 Intake::Intake() {
   ConfigureMotors_();
 
@@ -91,6 +95,13 @@ double Intake::GetAngleDeg() const {
   return m_angleEnc.GetPosition();
 }
 
+
+bool Intake::IsStowed() const {
+  const double err = std::abs(GetAngleDeg() - constants::Intake::kStowDeg);
+  return err <= constants::Intake::kAngleNearToleranceDeg;
+}
+
+
 void Intake::ForceZeroAngleHere() {
   m_angleEnc.SetPosition(0.0);
 }
@@ -135,8 +146,6 @@ void Intake::RunHoming_() {
 
 void Intake::ApplyAngleSetpoint_() {
   if (!m_homed || !m_angleSetpointDeg.has_value()) return;
-
-  const double curDeg = m_angleEnc.GetPosition(); //degrees
   const double tgtDeg = *m_angleSetpointDeg;
   m_anglePID.SetSetpoint(tgtDeg, rev::spark::SparkBase::ControlType::kPosition);
 }
@@ -199,6 +208,27 @@ frc2::CommandPtr Intake::AngleStowCmd() {
     SetAngleDeg(constants::Intake::kStowDeg);
   });
 }
+
+// Refuse to stow if the elevator is above a safe height.
+// We pass 'elevator' to read its height predicate.
+frc2::CommandPtr Intake::AngleStowSafedCmd(const Elevator& elevator) {
+  auto blockedIf = [&elevator] {
+    return elevator.IsAbove(constants::Intake::kNoStowAboveHeight);
+  };
+
+  auto underlying = AngleStowCmd();
+  return std::move(underlying)                 // <-- make it an rvalue
+      .Unless(std::function<bool()>(blockedIf))
+      .FinallyDo([this, blockedIf] {
+        if (blockedIf()) {
+          IntakeNetTable->PutString("Interlock", "Intake stow blocked: elevator raised");
+        }
+      })
+      .WithName("IntakeAngleStowSafed");
+}
+
+     
+
 
 frc2::CommandPtr Intake::AngleIntakeCmd() {
   return frc2::cmd::RunOnce([this] {

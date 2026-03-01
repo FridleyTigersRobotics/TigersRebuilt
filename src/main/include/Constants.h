@@ -263,6 +263,8 @@ namespace Intake {
     // Max angle slew rate (degrees per second). Tune to taste (e.g., 90.0 = 1/4 turn per second if 360°)
     inline constexpr double kAngleMaxDegPerSec = 45.0;
 
+    inline constexpr units::meter_t kNoStowAboveHeight = 0.20_m; // <-- tune
+
 
 
 

@@ -8,6 +8,11 @@
 #include <rev/config/SparkMaxConfig.h>
 #include <frc2/command/Commands.h>   // cmd::* factories
 
+
+#include "subsystems/Intake.h"     // NEW: needed for SetHeightSafedCmd
+#include <functional>              // NEW: for std::function
+
+
 namespace c = constants::Elevator;
 
 Elevator::Elevator()
@@ -83,6 +88,16 @@ units::meter_t Elevator::GetHeight() const {
   const double avgRot = 0.5 * (m_leftEnc.GetPosition() + m_rightEnc.GetPosition());
   return RotToMeters(avgRot);
 }
+
+
+bool Elevator::IsAbove(units::meter_t h) const {
+  return GetHeight() > h;
+}
+
+bool Elevator::IsBelow(units::meter_t h) const {
+  return GetHeight() < h; 
+}
+
 
 bool Elevator::AtSetpoint() const {
   // Must be homed and have a target
@@ -188,6 +203,26 @@ frc2::CommandPtr Elevator::SetHeightCmd(units::meter_t targetHeight) {
            {this}
          ).WithName("ElevatorSetHeight");
 }
+
+// Refuse to move to targetHeight if the intake is stowed.
+// 'intake' is referenced so we can read its live state.
+frc2::CommandPtr Elevator::SetHeightSafedCmd(units::meter_t targetHeight, const Intake& intake) {
+  auto blockedIf = [this, &intake, targetHeight] {
+    const bool goingUp = targetHeight > GetHeight();
+    return goingUp && intake.IsStowed();
+  };
+
+  auto underlying = SetHeightCmd(targetHeight);
+  return std::move(underlying)                 // <-- make it an rvalue
+      .Unless(std::function<bool()>(blockedIf))
+      .FinallyDo([this, blockedIf] {
+        if (blockedIf()) {
+          ElevatorNetTable->PutString("Interlock", "Elevator blocked: intake stowed");
+        }
+      })
+      .WithName("ElevatorSetHeightSafed");
+}
+
 
 frc2::CommandPtr Elevator::SpinDownTestCmd(double pct, units::second_t time) {
   const double kSafePct = std::clamp(std::abs(pct), 0.0, 1.0);

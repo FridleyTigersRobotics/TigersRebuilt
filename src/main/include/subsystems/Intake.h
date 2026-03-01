@@ -19,6 +19,8 @@
 #include <optional>
 #include "Constants.h"
 
+class Elevator;
+
 class Intake : public frc2::SubsystemBase {
  public:
   Intake();
@@ -31,6 +33,7 @@ class Intake : public frc2::SubsystemBase {
   void   SetAngleDeg(double deg);         // ignored until homed
   double GetAngleDeg() const;             // telemetry
   bool   IsAngleHomed() const { return m_homed; }
+  bool   IsStowed() const;
 
   // Homing to RIO DIO switch (non-blocking; handled in Periodic)
   void StartHoming();
@@ -43,6 +46,7 @@ class Intake : public frc2::SubsystemBase {
 
   frc2::CommandPtr ToggleAngleCmd();
   frc2::CommandPtr AngleStowCmd();
+  frc2::CommandPtr AngleStowSafedCmd(const Elevator& elevator);
   frc2::CommandPtr AngleIntakeCmd();
   frc2::CommandPtr AngleFromTriggerSupplierWhileHeldCmd(std::function<double()> triggerSupplier);
   

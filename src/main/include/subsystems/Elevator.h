@@ -14,6 +14,8 @@
 // REV 2026+ API
 #include <rev/SparkMax.h>  // rev::spark::SparkMax, SparkRelativeEncoder, SparkClosedLoopController
 
+class Intake;
+
 class Elevator : public frc2::SubsystemBase {
  public:
   Elevator();
@@ -24,12 +26,15 @@ class Elevator : public frc2::SubsystemBase {
 
   void SetHeight(units::meter_t height);        // request height (meters; clamps to soft limits)
   units::meter_t GetHeight() const;             // avg of both sides (meters)
+  bool IsAbove(units::meter_t h) const;
+  bool IsBelow(units::meter_t h) const;
   bool AtSetpoint() const;                      // within tolerance (your constants)
   void Stop();                                  // open-loop stop
 
   // Commands
   frc2::CommandPtr HomeCmd();                            // homing only
   frc2::CommandPtr SetHeightCmd(units::meter_t target);  // auto-home then mov
+  frc2::CommandPtr SetHeightSafedCmd(units::meter_t target, const Intake& intake);
   frc2::CommandPtr SpinDownTestCmd(double pct, units::second_t time);
   frc2::CommandPtr SpinUpTestCmd(double pct, units::second_t time);
 
