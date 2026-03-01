@@ -237,6 +237,34 @@ frc2::CommandPtr Intake::AngleIntakeCmd() {
   });
 }
 
+// Re-home only (no target angle after)
+frc2::CommandPtr Intake::RehomeCmd() {
+  return frc2::cmd::Sequence(
+           // Start homing: resets flags and begins motion toward the stop.
+           frc2::cmd::RunOnce([this] {
+             // Clear any prior state and begin a fresh homing attempt
+             StartHoming();
+             // Optional: publish a marker so you can see who initiated homing
+             IntakeNetTable->PutString("HomeStatus", "Rehome requested");
+           }, {this}),
+
+           // Wait until homed, but don't hang forever.
+           frc2::cmd::WaitUntil([this] { return m_homed; })
+             .WithTimeout(constants::Intake::kHomeTimeout)
+         )
+         .FinallyDo([this] {
+           if (!m_homed) {
+             // Ensure the motor is stopped and publish a timeout marker.
+             m_angle.Set(0.0);
+             IntakeNetTable->PutString("HomeStatus", "Rehome timeout");
+             // Leave m_homed = false, so later SetAngleDeg() will trigger homing again.
+           } else {
+             IntakeNetTable->PutString("HomeStatus", "Rehome complete");
+           }
+         })
+         .WithName("IntakeRehome");
+}
+
 // Map right trigger 0..1 to angle kStowDeg..kIntakeDeg.
 // Runs only while scheduled; on release, command ends so others can take control. Restores back to intake position.
 frc2::CommandPtr Intake::AngleFromTriggerSupplierWhileHeldCmd(std::function<double()> get) {
@@ -262,6 +290,10 @@ frc2::CommandPtr Intake::AngleFromTriggerSupplierWhileHeldCmd(std::function<doub
         SetAngleDeg(constants::Intake::kIntakeDeg);
       }
   ).WithName("IntakeAngleFromTriggerSupplierWhileHeld");
+}
+
+void Intake::SetWheelsPercent(double duty) {
+  m_wheels.Set(std::clamp(duty, -1.0, 1.0));  // open-loop duty; persists until changed
 }
 
 frc2::CommandPtr Intake::WheelsPercentCmd(double percent) {

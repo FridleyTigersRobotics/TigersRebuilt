@@ -49,6 +49,8 @@ class Intake : public frc2::SubsystemBase {
   frc2::CommandPtr AngleStowSafedCmd(const Elevator& elevator);
   frc2::CommandPtr AngleIntakeCmd();
   frc2::CommandPtr AngleFromTriggerSupplierWhileHeldCmd(std::function<double()> triggerSupplier);
+  void SetWheelsPercent(double duty);
+  frc2::CommandPtr RehomeCmd();
   
   // Run wheels at a fixed percent [-1, 1] while scheduled; stop on end.
   frc2::CommandPtr WheelsPercentCmd(double percent);
