@@ -240,19 +240,19 @@ namespace Intake {
     inline constexpr double kWheelsD       = 0.0;
     inline constexpr double kWheelsFF_kS   = 0.0;      // add only if needed
     inline constexpr double kWheelsFF_kV   = 12.0 / 1733.0; // ≈ 0.0069 V/RPM
-    inline constexpr double kIntakeRPM     = -1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead !!!FIXME!!!
+    inline constexpr double kIntakeRPM     = -1500.0;   // if you keep 2000, note the mech free ≈1733; consider 1500–1700 instead
     inline constexpr double kOuttakeRPM    = 1500.0;
     inline constexpr double kMechRPMperMotorRPM = 1.0 / 3.0;
     inline constexpr double kOpenLoopIntake = -1.0;
     inline constexpr double kOpenLoopOuttake = 1.0;
 
     // Angle position loop
-    inline constexpr double kAngleP = 0.25;
+    inline constexpr double kAngleP = 0.025;
     inline constexpr double kAngleI = 0.0;
     inline constexpr double kAngleD = 0.0;
     inline constexpr double kAngleFF_kS = 0.0;       // usually 0
     inline constexpr double kAngleFF_kV = 0.0;       // usually 0
-    inline constexpr double kDegPerMotorRot = 7.5;  // Example; compute from gear ratio and linkage !!!FIXME!!!
+    inline constexpr double kDegPerMotorRot = 360.0 / 113.0;  // 113:1 gear reduction
 
     inline constexpr double kIntakeSpeed = 5500.00;
 
@@ -269,12 +269,11 @@ namespace Intake {
     // Geometry conversion:
     // If 120° pivot travel corresponds to 24 motor rotations:
     //   rotations/deg = 24 / 120 = 0.20
-    inline constexpr double kRotationsPerDegree = 2.69;  // [motor rotations] per [mechanism degree] !!!FIXME!!!
+    inline constexpr double kRotationsPerDegree = (1 / kDegPerMotorRot);  //2.69 before
 
     // Useful preset angles (degrees) — optional
     inline constexpr double kStowDeg       = 0.0;
-    inline constexpr double kIntakeDeg     = 96.0;
-    inline constexpr double kSafeTravelDeg = 60.0;
+    inline constexpr double kIntakeDeg     = 100.0; //96 before
 
     // ---------------------------------
     // Homing: RIO DIO limit switch

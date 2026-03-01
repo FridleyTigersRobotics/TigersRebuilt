@@ -39,6 +39,7 @@ void Intake::ConfigureMotors_() {
   acfg.SmartCurrentLimit(constants::Intake::kAngleCurrentLimitA);
   acfg.VoltageCompensation(constants::Intake::kVoltageCompensation);
   acfg.SetIdleMode(rev::spark::SparkBaseConfig::IdleMode::kBrake);
+  acfg.ClosedLoopRampRate(0.2);
 
   // Optional: convert encoder position to mechanism rotations
   acfg.encoder.PositionConversionFactor(constants::Intake::kDegPerMotorRot);
@@ -82,13 +83,12 @@ void Intake::SetAngleDeg(double deg) {
   }
 
   // Normal path once homed
-  double tgtRot = DegToRot(deg);
-  m_angleSetpointRot = tgtRot;
+  m_angleSetpointDeg = deg;
   ApplyAngleSetpoint_();
 }
 
 double Intake::GetAngleDeg() const {
-  return RotToDeg(m_angleEnc.GetPosition());
+  return m_angleEnc.GetPosition();
 }
 
 void Intake::ForceZeroAngleHere() {
@@ -99,7 +99,7 @@ void Intake::StartHoming() {
   m_homed = false;
   m_homingActive = true;
   m_homeStart = frc::Timer::GetFPGATimestamp();
-  m_angleSetpointRot.reset();
+  m_angleSetpointDeg.reset();
 }
 
 void Intake::RunHoming_() {
@@ -117,7 +117,7 @@ void Intake::RunHoming_() {
 
     // If we had a pending angle request, apply it now
     if (m_pendingAngleDeg.has_value()) {
-      m_angleSetpointRot = DegToRot(*m_pendingAngleDeg);
+      m_angleSetpointDeg = *m_pendingAngleDeg;
       m_pendingAngleDeg.reset();
       ApplyAngleSetpoint_();
     }
@@ -134,26 +134,11 @@ void Intake::RunHoming_() {
 }
 
 void Intake::ApplyAngleSetpoint_() {
-  if (!m_homed || !m_angleSetpointRot.has_value()) return;
+  if (!m_homed || !m_angleSetpointDeg.has_value()) return;
 
-  // --- Rate limit toward the final target ---
-  // Assumes robot main loop is ~20 ms. If you run a different loop, adjust periodSec.
-  constexpr double kLoopPeriodSec = constants::RobotConst::kSchedulerTiming.value()/1000;
-  const double maxStepDeg = constants::Intake::kAngleMaxDegPerSec * kLoopPeriodSec;
-  const double maxStepRot = DegToRot(maxStepDeg);
-
-  const double curRot = m_angleEnc.GetPosition();
-  const double tgtRot = *m_angleSetpointRot;
-  const double errorRot = tgtRot - curRot;
-
-  // If within one step, just go to target
-  double nextRot = tgtRot;
-  if (std::abs(errorRot) > maxStepRot) {
-    nextRot = curRot + std::copysign(maxStepRot, errorRot);
-  }
-
-  // Command the *limited* intermediate setpoint each loop
-  m_anglePID.SetSetpoint(nextRot, rev::spark::SparkBase::ControlType::kPosition);
+  const double curDeg = m_angleEnc.GetPosition(); //degrees
+  const double tgtDeg = *m_angleSetpointDeg;
+  m_anglePID.SetSetpoint(tgtDeg, rev::spark::SparkBase::ControlType::kPosition);
 }
 
 void Intake::PublishTelemetry_() {
@@ -162,8 +147,7 @@ void Intake::PublishTelemetry_() {
   IntakeNetTable->PutBoolean("Homed", m_homed);
   IntakeNetTable->PutBoolean("HomingActive", m_homingActive);
   IntakeNetTable->PutBoolean("HomeSwitch", HomeSwitchPressed_());
-  IntakeNetTable->PutNumber("AngleDeg", GetAngleDeg());
-  IntakeNetTable->PutNumber("AngleRot", m_angleEnc.GetPosition());
+  IntakeNetTable->PutNumber("AngleDeg", m_angleEnc.GetPosition());
   IntakeNetTable->PutNumber("WheelsRPM", m_wheelsEnc.GetVelocity());
 }
 
@@ -224,16 +208,28 @@ frc2::CommandPtr Intake::AngleIntakeCmd() {
 }
 
 // Map right trigger 0..1 to angle kStowDeg..kIntakeDeg.
-// Runs only while scheduled; on release, command ends so others can take control.
+// Runs only while scheduled; on release, command ends so others can take control. Restores back to intake position.
 frc2::CommandPtr Intake::AngleFromTriggerSupplierWhileHeldCmd(std::function<double()> get) {
-  return frc2::cmd::Run([this, get] {
-    double raw = get();  // expected 0..1
-    double t = (std::abs(raw) < constants::Intake::kTriggerDeadband) ? 0.0 : raw;
-    t = std::clamp(t, constants::Intake::kTriggerMin, constants::Intake::kTriggerMax);
-    const double cmdDeg = constants::Intake::kIntakeDeg - t * (constants::Intake::kIntakeDeg - constants::Intake::kStowDeg);
-    // Uses your existing safety/homing path
-    SetAngleDeg(cmdDeg);
-  }).WithName("IntakeAngleFromTriggerSupplierWhileHeld");
+  return frc2::cmd::RunEnd(
+      // RUN — map trigger position to angle each scheduler loop while held
+      [this, get] {
+        double raw = get(); // expected 0..1
+        // Apply deadband: below deadband, treat as 0 so the arm stays at intake end
+        double t = (std::abs(raw) < constants::Intake::kTriggerDeadband) ? 0.0 : raw;
+        t = std::clamp(t, constants::Intake::kTriggerMin, constants::Intake::kTriggerMax);
+
+        // Map: t=0 -> kIntakeDeg, t=1 -> kStowDeg (linear interpolation)
+        const double cmdDeg =
+            constants::Intake::kIntakeDeg
+            - t * (constants::Intake::kIntakeDeg - constants::Intake::kStowDeg);
+
+        SetAngleDeg(cmdDeg);  // respects homing path
+      },
+      // END — when the trigger is released, return to intake angle
+      [this] {
+        SetAngleDeg(constants::Intake::kIntakeDeg);
+      }
+  ).WithName("IntakeAngleFromTriggerSupplierWhileHeld");
 }
 
 frc2::CommandPtr Intake::WheelsPercentCmd(double percent) {

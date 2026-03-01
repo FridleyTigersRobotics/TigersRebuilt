@@ -73,7 +73,7 @@ class Intake : public frc2::SubsystemBase {
   bool m_homed = false;
   bool m_homingActive = false;
   units::second_t m_homeStart{0_s};
-  std::optional<double> m_angleSetpointRot; // internal target in motor rotations
+  std::optional<double> m_angleSetpointDeg; // internal target in motor rotations
   bool m_publishTelemetry = true;
 
   // ----------- Internals -----------
@@ -87,10 +87,6 @@ class Intake : public frc2::SubsystemBase {
     bool raw = m_homeSwitch.Get();              // true/false from RIO
     return constants::Intake::kHomeSwitchActiveLow ? !raw : raw;
   }
-
-  // unit helpers
-  static double DegToRot(double deg) { return deg * constants::Intake::kRotationsPerDegree; }
-  static double RotToDeg(double rot) { return rot / constants::Intake::kRotationsPerDegree; }
 
   std::shared_ptr<nt::NetworkTable> IntakeNetTable =
       nt::NetworkTableInstance::GetDefault().GetTable("2227/Intake");
