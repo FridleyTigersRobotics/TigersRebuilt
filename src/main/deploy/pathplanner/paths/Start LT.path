@@ -3,37 +3,32 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5,
-        "y": 4.0
+        "x": 3.5795142857142856,
+        "y": 7.4492071428571425
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.306545933039371,
-        "y": 3.9987215796819555
+        "x": 2.8064608060301395,
+        "y": 7.341487155360587
       },
-      "isLocked": true,
-      "linkedName": "FH Start"
+      "isLocked": false,
+      "linkedName": null
     },
     {
       "anchor": {
-        "x": 2.575335714285714,
-        "y": 4.0
+        "x": 3.1065785714285714,
+        "y": 6.4644642857142856
       },
       "prevControl": {
-        "x": 2.308643343613326,
-        "y": 4.0
+        "x": 2.938194380741175,
+        "y": 6.64925271697163
       },
       "nextControl": null,
-      "isLocked": true,
-      "linkedName": "FH Shoot"
+      "isLocked": false,
+      "linkedName": "LTS"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.25,
-      "rotationDegrees": -179.13583374855088
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -47,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -62.281498371816625
   },
   "reversed": false,
   "folder": null,

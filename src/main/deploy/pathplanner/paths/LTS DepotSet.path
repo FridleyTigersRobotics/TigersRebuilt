@@ -3,37 +3,32 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5,
-        "y": 4.0
+        "x": 3.1065785714285714,
+        "y": 6.4644642857142856
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.306545933039371,
-        "y": 3.9987215796819555
+        "x": 2.2190142857142856,
+        "y": 6.43855
       },
       "isLocked": true,
-      "linkedName": "FH Start"
+      "linkedName": "LTS"
     },
     {
       "anchor": {
-        "x": 2.575335714285714,
-        "y": 4.0
+        "x": 1.5581999999999998,
+        "y": 5.972092857142857
       },
       "prevControl": {
-        "x": 2.308643343613326,
-        "y": 4.0
+        "x": 2.4133714285714283,
+        "y": 5.933221428571429
       },
       "nextControl": null,
       "isLocked": true,
-      "linkedName": "FH Shoot"
+      "linkedName": "LTSDS"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.25,
-      "rotationDegrees": -179.13583374855088
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -47,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 180.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -62.281498371816625
   },
   "useDefaultConstraints": true
 }

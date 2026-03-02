@@ -3,37 +3,32 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5,
-        "y": 4.0
+        "x": 7.654535714282019,
+        "y": 2.2987428571489286
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.306545933039371,
-        "y": 3.9987215796819555
+        "x": 6.60569570425373,
+        "y": 2.4730367959951325
       },
-      "isLocked": true,
-      "linkedName": "FH Start"
+      "isLocked": false,
+      "linkedName": "RCSP"
     },
     {
       "anchor": {
-        "x": 2.575335714285714,
-        "y": 4.0
+        "x": 5.672092857142858,
+        "y": 2.408878571428571
       },
       "prevControl": {
-        "x": 2.308643343613326,
-        "y": 4.0
+        "x": 6.814305902997853,
+        "y": 2.2737804008655185
       },
       "nextControl": null,
-      "isLocked": true,
-      "linkedName": "FH Shoot"
+      "isLocked": false,
+      "linkedName": null
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.25,
-      "rotationDegrees": -179.13583374855088
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -47,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -179.40319054877074
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

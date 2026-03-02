@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Start FH"
+            "pathName": "Start RT"
           }
         },
         {
@@ -23,9 +23,21 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "ElevatorLower"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "FHS to DepotSet"
+            "pathName": "RTS RCS"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ElevatorRaise"
           }
         },
         {
@@ -35,39 +47,15 @@
           }
         },
         {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.5
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "DS to FHS"
+            "pathName": "RCS Pick"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "IntakeWheelsStop"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "AutoShoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "IntakeFlip"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "AutoShoot"
           }
         }
       ]
