@@ -81,10 +81,16 @@ void RobotContainer::ConfigureBindings() {
   // Elevator Low
   m_buttons.Button(1).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kMinHeight, m_intake));
 
-  //Elevator High
-  m_buttons.Button(2).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kClimbHeight, m_intake));
-
   //Elevator Climb
+  m_buttons.Button(2).OnTrue(
+    frc2::cmd::Parallel(
+      m_elevator.SetHeightSafedCmd(constants::Elevator::kClimbHeight, m_intake),
+      m_shooter.SetHoodDegCommand(30.0)  // one-shot: calls Shooter::SetHoodDeg(30)
+    )
+  );
+
+
+  //Elevator High
   m_buttons.Button(3).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kMaxHeight, m_intake));
 
   //Intake Stow
@@ -108,7 +114,7 @@ rtHeld.WhileTrue(
 
 
   m_buttons.Button(4).WhileTrue(m_shooter.PassShortCmd());
-  m_buttons.Button(5).OnTrue(m_shooter.PassMidCmd());
+  m_buttons.Button(5).WhileTrue(m_shooter.PassMidCmd());
   m_buttons.Button(6).WhileTrue(m_shooter.PassFarCmd());
 
     //Intake In
