@@ -216,6 +216,7 @@ namespace Elevator {
 
 namespace RobotConst {
     inline constexpr units::millisecond_t kSchedulerTiming = units::millisecond_t{20}; //20_ms
+    inline constexpr double kPi = std::numbers::pi_v<double>;
 }// namespace RobotConst
 
 namespace Intake {

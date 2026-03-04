@@ -48,8 +48,8 @@
           },
           {
             "title": "Robot Voltage",
-            "x": 896.0,
-            "y": 256.0,
+            "x": 256.0,
+            "y": 128.0,
             "width": 256.0,
             "height": 128.0,
             "type": "Voltage View",
@@ -82,7 +82,7 @@
           },
           {
             "title": "Total Current",
-            "x": 768.0,
+            "x": 512.0,
             "y": 0.0,
             "width": 384.0,
             "height": 256.0,
@@ -118,37 +118,9 @@
             }
           },
           {
-            "title": "CmdRPM",
-            "x": 0.0,
-            "y": 384.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/2227/Shooter/CmdRPM",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "CmdHoodDeg",
-            "x": 128.0,
-            "y": 384.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/2227/Shooter/CmdHoodDeg",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
             "title": "AtSpeed",
-            "x": 384.0,
-            "y": 128.0,
+            "x": 256.0,
+            "y": 384.0,
             "width": 128.0,
             "height": 128.0,
             "type": "Boolean Box",
@@ -164,7 +136,7 @@
           },
           {
             "title": "MeasuredRPM",
-            "x": 1024.0,
+            "x": 128.0,
             "y": 384.0,
             "width": 128.0,
             "height": 128.0,
@@ -178,9 +150,9 @@
           },
           {
             "title": "CurrentPhase",
-            "x": 256.0,
-            "y": 128.0,
-            "width": 128.0,
+            "x": 1024.0,
+            "y": 256.0,
+            "width": 256.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
@@ -192,9 +164,9 @@
           },
           {
             "title": "IsOurHubActiveNow",
-            "x": 512.0,
+            "x": 896.0,
             "y": 0.0,
-            "width": 256.0,
+            "width": 384.0,
             "height": 256.0,
             "type": "Boolean Box",
             "properties": {
@@ -209,8 +181,8 @@
           },
           {
             "title": "MetersToHubGoal",
-            "x": 256.0,
-            "y": 384.0,
+            "x": 896.0,
+            "y": 256.0,
             "width": 128.0,
             "height": 128.0,
             "type": "Text Display",
@@ -223,7 +195,7 @@
           },
           {
             "title": "VisionUsed",
-            "x": 896.0,
+            "x": 0.0,
             "y": 384.0,
             "width": 128.0,
             "height": 128.0,
@@ -236,6 +208,48 @@
               "false_color": 4294198070,
               "true_icon": "None",
               "false_icon": "None"
+            }
+          },
+          {
+            "title": "GameSpecificMessage",
+            "x": 896.0,
+            "y": 384.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/FMSInfo/GameSpecificMessage",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "SecondsToNextPhase",
+            "x": 1024.0,
+            "y": 384.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/2227/Status Observer/Hub/SecondsToNextPhase",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "NextPhase",
+            "x": 1152.0,
+            "y": 384.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/2227/Status Observer/Hub/NextPhase",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
             }
           }
         ]

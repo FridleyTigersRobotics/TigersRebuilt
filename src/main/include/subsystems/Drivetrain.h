@@ -50,18 +50,18 @@ constexpr int kBR_CANCoder = 11;
 
 
 constexpr double NormalizeToPi(double r){
-  while (r >  M_PI) r -= 2*M_PI;
-  while (r <= -M_PI) r += 2*M_PI;
+  while (r >  constants::RobotConst::kPi) r -= 2*constants::RobotConst::kPi;
+  while (r <= -constants::RobotConst::kPi) r += 2*constants::RobotConst::kPi;
   return r;
 }
 
 
 namespace DriveConst {
   constexpr auto kMaxModuleSpeed = units::meters_per_second_t{3.7}; // match kMaxSpeed Below
-  constexpr auto kBR_Offset = units::radian_t{NormalizeToPi(-1.404 + M_PI)};
-  constexpr auto kBL_Offset = units::radian_t{NormalizeToPi(-2.315 + M_PI)};
-  constexpr auto kFR_Offset = units::radian_t{NormalizeToPi(-2.331 + M_PI)};
-  constexpr auto kFL_Offset = units::radian_t{NormalizeToPi(-0.20  + M_PI)};
+  constexpr auto kBR_Offset = units::radian_t{NormalizeToPi(-1.404 + constants::RobotConst::kPi)};
+  constexpr auto kBL_Offset = units::radian_t{NormalizeToPi(-2.315 + constants::RobotConst::kPi)};
+  constexpr auto kFR_Offset = units::radian_t{NormalizeToPi(-2.331 + constants::RobotConst::kPi)};
+  constexpr auto kFL_Offset = units::radian_t{NormalizeToPi(-0.20  + constants::RobotConst::kPi)};
 }
 
 
