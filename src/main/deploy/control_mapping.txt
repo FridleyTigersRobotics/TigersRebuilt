@@ -13,7 +13,7 @@ Start = rehome intake angle
 Buttons:
 10 = Elevator Home
 1 = Elevator Low
-2 = Elevator Climb
+2 = Intake Wheels Secondary
 3 = Elevator High
 4 = Pass Short
 5 = Pass Mid
