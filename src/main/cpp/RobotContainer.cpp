@@ -220,8 +220,8 @@ pathplanner::NamedCommands::registerCommand(
 
 
 // ---------------- Tunables ----------------
-static constexpr units::second_t kAimTimeout{5.00};          // how long to try aiming
-static constexpr units::second_t kSpinupTimeout{3.00};       // max wait to reach "at speed"
+static constexpr units::second_t kAimTimeout{2.00};          // how long to try aiming
+static constexpr units::second_t kSpinupTimeout{2.00};       // max wait to reach "at speed"
 static constexpr double          kAtSpeedTolRpm = 200.0;     // "at speed" band (RPM)
 static constexpr units::second_t kFeedTime{5.00};            // indexer feed duration
 
