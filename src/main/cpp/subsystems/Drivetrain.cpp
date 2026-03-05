@@ -46,6 +46,8 @@ Drivetrain::Drivetrain()
     m_rotLimiter{5.0 / units::second_t{1.0}} {
 
   m_gyro.ZeroYaw();
+  GyroSetAngle(180.0);
+  
   // Bind devices to the vision facade (single-drain occurs inside VisionPoseEstimator)
   VisionPoseEstimator::SetNavX(&m_gyro);
   VisionPoseEstimator::SetVision(&m_vision);  // m_vision is your Vision wrapper instance
@@ -300,6 +302,13 @@ void Drivetrain::UpdateOdometry() {
 }
 
 void Drivetrain::ZeroGyro() { m_gyro.ZeroYaw(); }
+
+void Drivetrain::GyroSetAngle(double angleSet){
+  m_gyro.SetAngleAdjustment(angleSet);
+  return;
+}
+
+
 
 void Drivetrain::SetXStance(){
   const units::meters_per_second_t zero{0.0};

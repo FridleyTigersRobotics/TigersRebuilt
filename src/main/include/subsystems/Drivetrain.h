@@ -123,6 +123,7 @@ class Drivetrain : public frc2::SubsystemBase {
   void Periodic() override;
 
   void ZeroGyro();
+  void GyroSetAngle(double angleSet);
 
  private:
   // Module locations (relative to robot center)
