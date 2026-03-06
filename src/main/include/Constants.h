@@ -174,6 +174,8 @@ namespace Elevator {
     inline constexpr int kLeadRightCanId = 25;
     inline constexpr int kLeftBottomDio  = 1;
     inline constexpr int kRightBottomDio = 2;
+    inline constexpr double kOpenLoopRampSeconds    = 0.05;   // s
+    inline constexpr double kClosedLoopRampSeconds    = 0.05;   // s
 
     // Geometry
     inline constexpr double kLeadPitch = 0.002; // TR12x2 lead (2 mm/rev)
@@ -187,7 +189,7 @@ namespace Elevator {
     inline constexpr units::meter_t kTolerance = 0.003_m; // ±3 mm
 
     // REV PID
-    inline constexpr double kP = 1.0;
+    inline constexpr double kP = 0.50;
     inline constexpr double kI = 0.0;
     inline constexpr double kD = 0.0;
     inline constexpr double kFF = 0.0;

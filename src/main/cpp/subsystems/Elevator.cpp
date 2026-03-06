@@ -33,6 +33,8 @@ Elevator::Elevator()
   // PID gains/output range in slot 0
   cfg.closedLoop.P(c::kP).I(c::kI).D(c::kD);
   cfg.closedLoop.OutputRange(-1.0, 1.0);
+  cfg.OpenLoopRampRate(c::kOpenLoopRampSeconds);
+  cfg.ClosedLoopRampRate(c::kClosedLoopRampSeconds);
 
   m_left.Configure(cfg,  rev::ResetMode::kResetSafeParameters,  rev::PersistMode::kPersistParameters);
   m_right.Configure(cfg, rev::ResetMode::kResetSafeParameters,  rev::PersistMode::kPersistParameters);
