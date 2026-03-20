@@ -129,7 +129,7 @@ rtHeld.WhileTrue(
   //run shooter from nettable
   m_buttons.Button(7).WhileTrue(m_shooter.CalcAndSetShotCmd());
 
-  m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
+  //m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
 
 }
 

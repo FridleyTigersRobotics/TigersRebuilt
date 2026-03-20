@@ -198,8 +198,14 @@ frc2::CommandPtr Elevator::SetHeightCmd(units::meter_t targetHeight) {
                // Already homed: set target, then wait at setpoint
                return frc2::cmd::Sequence(IssueTarget(), WaitAtSetpoint());
              } else {
-               // Not homed: Home first, then set target, then wait
-               return frc2::cmd::Sequence(HomeCmd(), IssueTarget(), WaitAtSetpoint());
+               // Not homed: try to home, Only proceed if homing actually succeeded
+               return frc2::cmd::Sequence(
+                HomeCmd(), 
+                frc2::cmd::Either(
+                  frc2::cmd::Sequence(IssueTarget(), WaitAtSetpoint()),
+                  frc2::cmd::None(),
+                  [this] {return IsHomed();}
+                ));
              }
            },
            {this}
