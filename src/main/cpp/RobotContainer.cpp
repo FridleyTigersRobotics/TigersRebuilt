@@ -126,7 +126,7 @@ rtHeld.WhileTrue(
   //Index Rev
   m_buttons.Button(9).WhileTrue(m_indexer.ReverseSetCmd());
 
-  //run shooter from nettable
+  //run shooter
   m_buttons.Button(7).WhileTrue(m_shooter.CalcAndSetShotCmd());
 
   //m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
