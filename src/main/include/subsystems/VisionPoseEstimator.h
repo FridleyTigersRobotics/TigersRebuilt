@@ -104,7 +104,10 @@ class VisionPoseEstimator {
           // Measured per-frame transform + fixed mount
           const frc::Transform3d camToTag   = best->GetBestCameraToTarget(); // PV build-dependent direction
           const frc::Transform3d tagToCam   = camToTag.Inverse();
-          const frc::Transform3d robotToCam = constants::Vision::kRobotToCam;      // MUST be Robot→Camera
+          //const frc::Transform3d robotToCam = constants::Vision::kRobotToCam;      // MUST be Robot→Camera
+          frc::Transform3d robotToCam =
+              m_robotToCamSupplier ? m_robotToCamSupplier()
+                                  : constants::Vision::kRobotToCam;
           const frc::Transform3d camToRobot = robotToCam.Inverse();                 // Camera→Robot
 
           // Telemetry: reveal your mount immediately (common root cause if zero)
@@ -195,11 +198,17 @@ class VisionPoseEstimator {
   // ---------------------- Accessors for drivetrain ------------------------------------
   static units::second_t GetLastTimestamp() { return lastTimestamp; }
   static Eigen::Matrix<double, 3, 1> GetLastStdDevs() { return lastStdDevs; }
+  
+  static void SetRobotToCamSupplier(std::function<frc::Transform3d()> supplier) {
+    m_robotToCamSupplier = std::move(supplier);
+  }
+
 
  private:
   // Bound devices / subsystems
   static inline Vision*        m_vision = nullptr; // single-drain handled by Vision (BeginFrame/PeekFrame)
   static inline studica::AHRS* m_navx   = nullptr;
+  static inline std::function<frc::Transform3d()> m_robotToCamSupplier = nullptr;
 
   // Cached data for the drivetrain
   static inline frc::Pose2d            currentOdometryPose{};

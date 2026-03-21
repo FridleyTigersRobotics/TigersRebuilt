@@ -11,6 +11,12 @@
 #include <units/time.h>
 #include <rev/SparkMax.h>
 
+#include <frc/geometry/Transform3d.h>
+#include <frc/geometry/Translation3d.h>
+#include <frc/geometry/Rotation3d.h>
+#include <units/length.h>
+
+
 // REV 2026+ API
 #include <rev/SparkMax.h>  // rev::spark::SparkMax, SparkRelativeEncoder, SparkClosedLoopController
 
@@ -30,6 +36,7 @@ class Elevator : public frc2::SubsystemBase {
   bool IsBelow(units::meter_t h) const;
   bool AtSetpoint() const;                      // within tolerance (your constants)
   void Stop();                                  // open-loop stop
+  frc::Transform3d GetRobotToCamera() const;
 
   // Commands
   frc2::CommandPtr HomeCmd();                            // homing only

@@ -34,6 +34,10 @@ RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_el
   ConfigureBindings();
   BuildPathPlannerAutoChooser();
 
+  VisionPoseEstimator::SetRobotToCamSupplier(
+      [this] { return m_elevator.GetRobotToCamera(); }
+  );
+
   // Default teleop drive: read Xbox each loop and drive
   m_drivetrain.SetDefaultCommand(
       frc2::RunCommand(

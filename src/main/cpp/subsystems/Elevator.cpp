@@ -198,15 +198,23 @@ frc2::CommandPtr Elevator::SetHeightCmd(units::meter_t targetHeight) {
                // Already homed: set target, then wait at setpoint
                return frc2::cmd::Sequence(IssueTarget(), WaitAtSetpoint());
              } else {
-               // Not homed: try to home, Only proceed if homing actually succeeded
-               return frc2::cmd::Sequence(
-                HomeCmd(), 
-                frc2::cmd::Either(
-                  frc2::cmd::Sequence(IssueTarget(), WaitAtSetpoint()),
-                  frc2::cmd::None(),
-                  [this] {return IsHomed();}
-                ));
-             }
+                return frc2::cmd::Sequence(
+                    // Attempt homing
+                    HomeCmd(),
+
+                    // Explicitly wait for homing to finish (success OR timeout)
+                    frc2::cmd::WaitUntil([this] {
+                      return IsHomed() || !m_homing;
+                    }),
+
+                    // Only continue if homing succeeded
+                    frc2::cmd::Either(
+                        frc2::cmd::Sequence(IssueTarget(), WaitAtSetpoint()),
+                        frc2::cmd::None(),
+                        [this] { return IsHomed(); }
+                    )
+                );
+              }
            },
            {this}
          ).WithName("ElevatorSetHeight");
@@ -320,4 +328,22 @@ void Elevator::UpdateNetTable() const {
   ElevatorNetTable->PutNumber ("Skew_m",      skew_m.value());
 
   ElevatorNetTable->PutBoolean("AtSetpoint",  AtSetpoint());
+}
+
+
+frc::Transform3d Elevator::GetRobotToCamera() const {
+    // Live elevator carriage height in meters (you already have this)
+    const units::meter_t h = GetHeight();
+
+    // Reuse your base Robot→Camera transform from Constants
+    const auto& base = constants::Vision::kRobotToCam;
+
+    // Pure Z change: keep X, Y, and all rotations; add elevator height to base Z
+    const frc::Translation3d dynTrans{
+        base.X(),           // fixed X
+        base.Y(),           // fixed Y
+        base.Z() + h        // base Z + elevator height
+    };
+
+    return frc::Transform3d{dynTrans, base.Rotation()};
 }
