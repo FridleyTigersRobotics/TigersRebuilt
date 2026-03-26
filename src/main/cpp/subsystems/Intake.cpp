@@ -281,7 +281,7 @@ frc2::CommandPtr Intake::AngleFromTriggerSupplierWhileHeldCmd(std::function<doub
             constants::Intake::kIntakeDeg
             - t * (constants::Intake::kIntakeDeg - constants::Intake::kStowDeg);
 
-        cmdDeg=std::clamp(cmdDeg,(constants::Intake::kStowDeg+27.0),(constants::Intake::kIntakeDeg)); //+27 to not crash intake into elevator
+        cmdDeg=std::clamp(cmdDeg,(constants::Intake::kStowDeg),(constants::Intake::kIntakeDeg)); //+27 to not crash intake into elevator
 
         SetAngleDeg(cmdDeg);  // respects homing path
       },

@@ -278,7 +278,7 @@ namespace Intake {
 
     // Useful preset angles (degrees) — optional
     inline constexpr double kStowDeg       = 0.0;
-    inline constexpr double kIntakeDeg     = 95.0; //96 before
+    inline constexpr double kIntakeDeg     = 94.0; //96 before
 
     // ---------------------------------
     // Homing: RIO DIO limit switch
