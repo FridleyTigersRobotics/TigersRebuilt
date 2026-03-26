@@ -31,6 +31,7 @@ class Shooter : public frc2::SubsystemBase {
 
   // shot calculation and set speed
   frc2::CommandPtr CalcAndSetShotCmd();
+  frc2::CommandPtr CalcAndSetStaticCmd();
 
     // While-held command: follow Elastic fields (CmdHoodDeg/CmdRPM); on release, zero & stop
   frc2::CommandPtr ApplyNtShotWhileHeldCmd();

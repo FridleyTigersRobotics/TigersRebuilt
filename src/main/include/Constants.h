@@ -142,6 +142,7 @@ namespace Shooter {
   // Homing duty toward the switch while disabled CL
   inline constexpr double kHoodHomeDuty          = -0.05;   // sign to drive toward switch
   inline constexpr units::second_t kHomingTimeout = units::second_t{5.0};
+  inline constexpr units::meter_t kStaticShotDist = units::meter_t{2.5};
 
 
 }  // namespace Shooter

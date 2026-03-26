@@ -405,7 +405,7 @@ double Shooter::ClampHoodDeg(double degClamp) {
 frc2::CommandPtr Shooter::PassFarCmd() {
   return frc2::cmd::RunEnd(
     [this] {
-      const double reqDeg = ClampHoodDeg(40.0);
+      const double reqDeg = ClampHoodDeg(35.0);
       const double reqRpm = ClampRpm(4000.0);
       this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
       this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
@@ -423,7 +423,7 @@ frc2::CommandPtr Shooter::PassFarCmd() {
 frc2::CommandPtr Shooter::PassShortCmd() {
   return frc2::cmd::RunEnd(
     [this] {
-      const double reqDeg = ClampHoodDeg(40.0);
+      const double reqDeg = ClampHoodDeg(35.0);
       const double reqRpm = ClampRpm(2000.0);
       this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
       this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
@@ -440,7 +440,7 @@ frc2::CommandPtr Shooter::PassShortCmd() {
 frc2::CommandPtr Shooter::PassMidCmd() {
   return frc2::cmd::RunEnd(
     [this] {
-      const double reqDeg = ClampHoodDeg(40.0);
+      const double reqDeg = ClampHoodDeg(35.0);
       const double reqRpm = ClampRpm(3000.0);
       this->SetHoodDeg(reqDeg);     // your SetHoodDeg handles homing/queueing
       this->SetTargetRPM(reqRpm);   // feeds your periodic velocity loop
@@ -452,4 +452,28 @@ frc2::CommandPtr Shooter::PassMidCmd() {
     },
     {this}
   );
+}
+
+frc2::CommandPtr Shooter::CalcAndSetStaticCmd() {
+  return frc2::cmd::RunEnd(
+        // run: updates each scheduler loop (~20ms by default)
+        [this] {
+          frc::Translation2d allianceHubCoords;
+          const auto alliance = frc::DriverStation::GetAlliance();
+          if (alliance && alliance.value() == frc::DriverStation::Alliance::kRed) {
+            allianceHubCoords = constants::Field::kRedHubCoord;
+          } else {
+            allianceHubCoords = constants::Field::kBlueHubCoord;
+          }
+          const units::meter_t shotdist = constants::Shooter::kStaticShotDist;
+          const Shooter::ShotParams shot = DistToShotParams(shotdist);
+          this->SetHoodDeg(shot.deg);
+          this->SetTargetRPM(shot.rpm);
+        },
+        // end: ensure shooter is safe when command ends or is interrupted
+        [this] {  this->Stop();
+                  this->SetHoodDeg(0.0);
+                },
+        {this}
+    );
 }
