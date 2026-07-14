@@ -94,6 +94,17 @@ void RobotContainer::ConfigureBindings() {
   //Intake Intake
   m_driverController.A().OnTrue(m_intake.AngleIntakeCmd());
 
+
+  m_other.Button(5).OnTrue( 
+    //frc2::cmd::RepeatingSequence(
+      frc2::cmd::Parallel(
+        m_shooter.PassMidCmd().WithTimeout(3.0_s),
+        m_indexer.RunSetCmd().BeforeStarting( frc2::cmd::Wait(1.0_s) ).WithTimeout(3.0_s)
+      )
+    //)
+  );
+
+
   // RobotContainer.cpp
 
 // Condition for "right trigger is held beyond deadband"
