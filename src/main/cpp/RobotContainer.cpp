@@ -42,9 +42,7 @@ RobotContainer::RobotContainer() : m_drivetrain(), m_shooter(m_drivetrain), m_el
   m_drivetrain.SetDefaultCommand(
       frc2::RunCommand(
           [this] {
-            m_drivetrain.DriveFromXbox(m_driverController.GetHID(),
-                                       /*fieldRelative=*/true,
-                                       constants::RobotConst::kSchedulerTiming);
+            m_drivetrain.Drive(units::velocity::meters_per_second_t {0}, units::velocity::meters_per_second_t {0}, units::angular_velocity::radians_per_second_t {0}, true, units::time::second_t {20});
           },
           {&m_drivetrain}));
 
@@ -56,7 +54,7 @@ void RobotContainer::ConfigureBindings() {
     return m_subsystem.ExampleCondition();
   }).OnTrue(ExampleCommand(&m_subsystem).ToPtr());
 
-
+  /*
   // Hold B to X the wheels
     m_driverController.B().WhileTrue(
         frc2::RunCommand(
@@ -64,7 +62,6 @@ void RobotContainer::ConfigureBindings() {
             {&m_drivetrain}
         ).ToPtr()
     ); // also valid: m_driverController.B().WhileTrue(m_drivetrain.cmdSetXStance());
-
 
   // POV Up: Zero gyro (wrap InstantCommand with .ToPtr() to satisfy OnTrue()) 
   m_driverController.POV(0).OnTrue(
@@ -76,20 +73,20 @@ void RobotContainer::ConfigureBindings() {
   m_driverController.RightStick().WhileTrue(
       m_drivetrain.cmdAimAtHub(
         m_driverController.GetHID(),   // passes a const frc::XboxController& (non-copy)
-        /*fieldRelative=*/true,
+        true,
         constants::RobotConst::kSchedulerTiming)
     );
-
+  */
   
-
+  
   // Elevator Low
-  m_buttons.Button(1).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kMinHeight, m_intake));
+  // m_buttons.Button(1).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kMinHeight, m_intake));
 
   //Secondary Intake In Wheels
   m_buttons.Button(2).WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
 
   //Elevator High
-  m_buttons.Button(3).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kMaxHeight, m_intake));
+  // m_buttons.Button(3).OnTrue(m_elevator.SetHeightSafedCmd(constants::Elevator::kMaxHeight, m_intake));
 
   //Intake Stow
   m_driverController.X().OnTrue(m_intake.AngleStowSafedCmd(m_elevator));
@@ -115,6 +112,10 @@ rtHeld.WhileTrue(
   m_buttons.Button(5).WhileTrue(m_shooter.PassMidCmd());
   m_buttons.Button(6).WhileTrue(m_shooter.PassFarCmd());
 
+  m_other.Button(1).WhileTrue(m_shooter.PassShortCmd());
+  m_other.Button(2).WhileTrue(m_shooter.PassMidCmd());
+  m_other.Button(3).WhileTrue(m_shooter.PassFarCmd());
+
     //Intake In
   m_driverController.RightBumper().WhileTrue(m_intake.WheelsPercentCmd(constants::Intake::kOpenLoopIntake));
 
@@ -126,6 +127,7 @@ rtHeld.WhileTrue(
   
   //Index Shoot
   m_buttons.Button(8).WhileTrue(m_indexer.RunSetCmd());
+  m_other.Button(4).WhileTrue(m_indexer.RunSetCmd());
 
   //Index Rev
   m_buttons.Button(9).WhileTrue(m_indexer.ReverseSetCmd());
@@ -139,6 +141,7 @@ rtHeld.WhileTrue(
   //m_buttons.Button(10).OnTrue(m_elevator.HomeCmd());
 
 }
+
 
 frc2::CommandPtr RobotContainer::GetAutonomousCommand() {
   

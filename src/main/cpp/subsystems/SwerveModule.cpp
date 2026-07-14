@@ -107,8 +107,8 @@ void SwerveModule::SetDesiredState(frc::SwerveModuleState& referenceState) {
   if (totalVolts > 12_V)  totalVolts = 12_V;
   if (totalVolts < -12_V) totalVolts = -12_V;
 
-  m_driveMotor.SetVoltage(totalVolts);
-  m_turningMotor.Set(turnOutput);
+  m_driveMotor.SetVoltage(units::voltage::volt_t {0.0});
+  m_turningMotor.Set(0.0);
 }
 
 void SwerveModule::Periodic() {

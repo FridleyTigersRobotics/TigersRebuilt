@@ -40,6 +40,8 @@ class RobotContainer {
 
   frc2::CommandGenericHID m_buttons {constants::OperatorConstants::kButtonsPort};
 
+  frc2::CommandXboxController m_other {constants::OperatorConstants::kOtherPort};
+
   // Subsystems
   ExampleSubsystem m_subsystem;
   Drivetrain m_drivetrain;

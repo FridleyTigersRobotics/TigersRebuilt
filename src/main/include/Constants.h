@@ -36,6 +36,7 @@ namespace constants {
 namespace OperatorConstants {
 inline constexpr int kDriverControllerPort = 0;
 inline constexpr int kButtonsPort = 1;
+inline constexpr int kOtherPort = 2;
 }  // namespace OperatorConstants
 
 // ============================================================================
